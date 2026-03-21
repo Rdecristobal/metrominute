@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -23,15 +23,24 @@ export default function Home() {
                 <CardDescription>Choose a game mode and start playing</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
-                <Button asChild className="w-full">
-                  <Link href="/game?mode=classic">Classic Mode</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/game?mode=timed">Timed Mode</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/game?mode=endless">Endless Mode</Link>
-                </Button>
+                <Link 
+                  href="/game?mode=classic"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-900 text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200 h-10 px-4 py-2 w-full"
+                >
+                  Classic Mode
+                </Link>
+                <Link 
+                  href="/game?mode=timed"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-800 h-10 px-4 py-2 w-full"
+                >
+                  Timed Mode
+                </Link>
+                <Link 
+                  href="/game?mode=endless"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-800 h-10 px-4 py-2 w-full"
+                >
+                  Endless Mode
+                </Link>
               </CardContent>
             </Card>
 
@@ -41,9 +50,12 @@ export default function Home() {
                 <CardDescription>See the top scores</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button asChild variant="secondary" className="w-full">
-                  <Link href="/leaderboard">View Leaderboard</Link>
-                </Button>
+                <Link 
+                  href="/leaderboard"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 h-10 px-4 py-2 w-full"
+                >
+                  View Leaderboard
+                </Link>
               </CardContent>
             </Card>
           </div>
