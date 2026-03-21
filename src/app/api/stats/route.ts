@@ -27,7 +27,7 @@ export async function GET() {
       totalGames: totalGames || 0,
       averageScore: Math.round(averageScore),
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
 }

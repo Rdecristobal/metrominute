@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -7,10 +8,10 @@ export default function LeaderboardPage() {
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black">
       <header className="flex items-center gap-4 p-4 border-b border-zinc-200 dark:border-zinc-800">
         <Button variant="ghost" asChild>
-          <a href="/">
+          <Link href="/">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
-          </a>
+          </Link>
         </Button>
         <h1 className="text-2xl font-bold">Leaderboard</h1>
       </header>

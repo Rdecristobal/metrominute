@@ -14,7 +14,7 @@ export async function GET() {
     if (error) throw error;
 
     return NextResponse.json({ data });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to fetch scores" }, { status: 500 });
   }
 }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     if (error) throw error;
 
     return NextResponse.json({ data });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: "Failed to save score" }, { status: 500 });
   }
 }

@@ -27,7 +27,7 @@ export class GameEngine {
     // Game stop logic
   }
 
-  clickTarget(targetId: string): void {
-    // Target click logic
+  clickTarget(_targetId: string): void {
+    // Target click logic - _targetId will be used when game logic is implemented
   }
 }
