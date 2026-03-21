@@ -1,3 +1,5 @@
+"use client";
+
 export default function Timer() {
-  return <div>Timer</div>;
+  return null; // Timer is now displayed in GameBoard header
 }

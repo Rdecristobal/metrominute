@@ -1,3 +1,5 @@
+"use client";
+
 export default function ScoreBoard() {
-  return <div>Score</div>;
+  return null; // Score is now displayed in GameBoard header
 }
