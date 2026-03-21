@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -7,7 +8,7 @@ import GameBoard from "@/components/game/GameBoard";
 import ScoreBoard from "@/components/game/ScoreBoard";
 import Timer from "@/components/game/Timer";
 
-export default function GamePage() {
+function GameContent() {
   const searchParams = useSearchParams();
   const _mode = searchParams.get("mode") || "classic";
 
@@ -31,5 +32,13 @@ export default function GamePage() {
         <GameBoard />
       </main>
     </div>
+  );
+}
+
+export default function GamePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <GameContent />
+    </Suspense>
   );
 }
