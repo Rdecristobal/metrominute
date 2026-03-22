@@ -200,7 +200,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
         // Spawn golden target with probability in normal mode
         const phaseConfig = engineRef.current?.getPhaseConfig();
-        if (mode === 'normal' && phaseConfig?.golden && Math.random() < 0.25) {
+        const hasGolden = phaseConfig && 'golden' in phaseConfig && phaseConfig.golden;
+        if (mode === 'normal' && hasGolden && Math.random() < 0.25) {
           setTimeout(() => {
             engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, true);
           }, 500);
