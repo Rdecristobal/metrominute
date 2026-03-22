@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { GameEngine, PHASES, CHALLENGES, loadHighScore, loadSoundEnabled } from "@/lib/game/engine";
 import Target from "@/components/game/Target";
 import { Particle, FloatingScore, Ripple, Target as TargetType } from "@/lib/game/types";
@@ -20,7 +20,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const decoyIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevPhaseRef = useRef<number>(0);
 
-  const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('home');
+  const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('countdown');
   const [targets, setTargets] = useState<Array<{ id: string; x: number; y: number; type: 'normal' | 'golden' | 'decoy'; size: number }>>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
@@ -189,13 +189,31 @@ export default function GameBoard({ mode }: GameBoardProps) {
         setTimeout(() => setShowFlash(false), 200);
       }
 
+      // Respawn new target when shouldSpawnMore is true
+      if (result.shouldSpawnMore && gameAreaRef.current) {
+        const gameArea = gameAreaRef.current;
+
+        // Spawn new normal target
+        setTimeout(() => {
+          engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, false);
+        }, 300);
+
+        // Spawn golden target with probability in normal mode
+        const phaseConfig = engineRef.current?.getPhaseConfig();
+        if (mode === 'normal' && phaseConfig?.golden && Math.random() < 0.25) {
+          setTimeout(() => {
+            engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, true);
+          }, 500);
+        }
+      }
+
       if (result.newChallenge !== undefined) {
         setTimeout(() => {
           handleChallengeComplete(result.newChallenge!);
         }, 300);
       }
     }
-  }, [gameState.soundEnabled, gameState.combo, gameState.multiplier]);
+  }, [gameState.soundEnabled, gameState.combo, gameState.multiplier, mode]);
 
   const handleChallengeComplete = (nextChallenge: number) => {
     playSound('challenge-success', gameState.soundEnabled);
@@ -388,6 +406,12 @@ export default function GameBoard({ mode }: GameBoardProps) {
     }
   };
 
+  // Auto-start game on mount (skip redundant home screen)
+  useEffect(() => {
+    startGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const goHome = () => {
     cleanup();
     engineRef.current?.resetGame();
@@ -481,13 +505,15 @@ export default function GameBoard({ mode }: GameBoardProps) {
           }
         }}
       >
-        {targets.map(target => (
-          <Target
-            key={target.id}
-            target={target}
-            onClick={(e) => handleTargetClick(target.id, e)}
-          />
-        ))}
+        <AnimatePresence>
+          {targets.map(target => (
+            <Target
+              key={target.id}
+              target={target}
+              onClick={(e) => handleTargetClick(target.id, e)}
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Particles */}
