@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import { GameEngine, PHASES, CHALLENGES, loadHighScore, loadSoundEnabled } from "@/lib/game/engine";
 import Target from "@/components/game/Target";
-import { Particle, FloatingScore, Ripple } from "@/lib/game/types";
+import { Particle, FloatingScore, Ripple, Target as TargetType } from "@/lib/game/types";
 import { playSound, vibrate } from "@/lib/game/audio";
 import { useRouter } from "next/navigation";
 
@@ -17,6 +18,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const movementIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const decoyIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const prevPhaseRef = useRef<number>(0);
 
   const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('home');
   const [targets, setTargets] = useState<Array<{ id: string; x: number; y: number; type: 'normal' | 'golden' | 'decoy'; size: number }>>([]);
@@ -280,7 +282,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
     engineRef.current.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, false);
 
-    if (phaseConfig?.golden && Math.random() < 0.25) {
+    // Only spawn golden targets in 'normal' mode (Challenge mode)
+    if (mode === 'normal' && 'golden' in phaseConfig! && phaseConfig?.golden && Math.random() < 0.25) {
       setTimeout(() => {
         engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, true);
       }, 400);
@@ -321,13 +324,15 @@ export default function GameBoard({ mode }: GameBoardProps) {
       }
 
       // Handle phase change in classic mode
-      if (mode === 'classic' && gameState.currentPhase !== engineRef.current.getState().currentPhase) {
-        const phaseIndex = engineRef.current.getState().currentPhase;
+      const engineState = engineRef.current.getState();
+      if (mode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
+        const phaseIndex = engineState.currentPhase;
         const phase = PHASES[phaseIndex];
         setPhaseIndicator(phase.name);
         setShowPhaseIndicator(true);
         setTimeout(() => setShowPhaseIndicator(false), 2000);
         setupMovementAndDecoys();
+        prevPhaseRef.current = engineState.currentPhase;
       }
     }, 1000);
   };
@@ -364,8 +369,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const toggleDecoys = () => {
-    setTargets(prev => prev.map(t => 
-      t.type === 'decoy' ? { ...t, opacity: t.opacity === 0 ? 1 : 0 } : t
+    setTargets(prev => prev.map((t: TargetType) => 
+      t.type === 'decoy' ? { ...t, opacity: (t.opacity ?? 1) === 0 ? 1 : 0 } : t
     ));
   };
 
@@ -472,7 +477,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
         className={`absolute inset-0 ${shake ? 'animate-shake' : ''}`}
         onClick={(e) => {
           if (e.target === gameAreaRef.current) {
-            gameState.totalClicks++;
+            engineRef.current?.recordMiss();
           }
         }}
       >

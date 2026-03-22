@@ -7,6 +7,7 @@ export interface Target {
   y: number;
   type: 'normal' | 'golden' | 'decoy';
   size: number;
+  opacity?: number;
 }
 
 export interface GameState {

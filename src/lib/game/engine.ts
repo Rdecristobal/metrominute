@@ -187,6 +187,12 @@ export class GameEngine {
     this.notify();
   }
 
+  recordMiss(): void {
+    if (!this.state.isPlaying || this.state.isGameOver) return;
+    this.state.totalClicks++;
+    this.notify();
+  }
+
   clickTarget(targetId: string, clientX: number, clientY: number): { success: boolean; points: number; shouldSpawnMore: boolean; newChallenge?: number } {
     if (!this.state.isPlaying || this.state.isGameOver) {
       return { success: false, points: 0, shouldSpawnMore: false };

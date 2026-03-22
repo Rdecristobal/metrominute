@@ -73,7 +73,7 @@ export function playSound(soundType: SoundType, enabled: boolean = true): void {
 }
 
 export function vibrate(pattern?: number | number[]): void {
-  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+  if (typeof navigator !== 'undefined' && navigator.vibrate && pattern !== undefined) {
     navigator.vibrate(pattern);
   }
 }
