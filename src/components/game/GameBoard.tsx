@@ -761,7 +761,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
         }
       `}</style>
 
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-zinc-900 via-zinc-950 to-black min-h-screen">
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-[#1A1A2E] via-[#0D0D1A] to-[#0D0D1A] min-h-screen relative overflow-hidden">
         <div className="relative w-full max-w-[420px] h-[85vh] max-h-[850px] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800">
           {/* Header */}
           {(screen === 'game' || screen === 'countdown') && (

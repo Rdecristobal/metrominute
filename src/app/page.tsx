@@ -1,60 +1,48 @@
+"use client";
+
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black min-h-screen">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-16 px-4">
-        <div className="flex flex-col items-center gap-8 text-center w-full">
-          <div>
-            <h1 className="text-5xl font-bold tracking-tight text-black dark:text-zinc-50 mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Metro Minute
-            </h1>
-            <p className="text-xl text-zinc-600 dark:text-zinc-400">
-              Test your reflexes! Click the targets as fast as you can.
-            </p>
-          </div>
+    <div className="min-h-screen bg-[#1A1A2E] flex items-center justify-center overflow-hidden relative">
+      {/* Background gradient effects */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,212,255,0.03)_0%,transparent_50%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,#1A1A2E_0%,#0D0D1A_100%)]" />
+      
+      <div className="relative z-10 flex flex-col items-center justify-center px-6 py-12 text-center">
+        {/* Logo/Title */}
+        <h1 className="text-5xl md:text-6xl font-bold text-[#00D4FF] mb-2 tracking-tight">
+          Metro Minute
+        </h1>
+        <p className="text-lg text-white/60 mb-12">
+          Test your reflexes! Click the targets as fast as you can.
+        </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
-            <Card>
-              <CardHeader>
-                <CardTitle>🎮 Play Now</CardTitle>
-                <CardDescription>Choose a game mode and start playing</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <Link 
-                  href="/game?mode=normal"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-pink-600 text-white hover:bg-pink-700 dark:bg-pink-600 dark:text-white dark:hover:bg-pink-700 h-10 px-4 py-2 w-full"
-                >
-                  🎯 Normal Mode
-                </Link>
-                <Link 
-                  href="/game?mode=classic"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 bg-white hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-800 h-10 px-4 py-2 w-full"
-                >
-                  ⏱️ Classic Mode
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>🏆 Leaderboard</CardTitle>
-                <CardDescription>See the top scores</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link 
-                  href="/leaderboard"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700 h-10 px-4 py-2 w-full"
-                >
-                  View Leaderboard
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Play buttons */}
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          <Link
+            href="/game?mode=normal"
+            className="bg-gradient-to-r from-[#00D4FF] to-[#0099CC] text-[#1A1A2E] font-bold py-4 px-8 rounded-xl text-lg shadow-[0_4px_15px_rgba(0,212,255,0.3)] hover:shadow-[0_6px_20px_rgba(0,212,255,0.4)] hover:-translate-y-0.5 transition-all duration-200"
+          >
+            🎮 Normal Mode
+          </Link>
+          
+          <Link
+            href="/game?mode=classic"
+            className="bg-white/10 text-white font-bold py-4 px-8 rounded-xl text-lg hover:bg-white/20 transition-all duration-200"
+          >
+            ⏱️ Classic Mode
+          </Link>
         </div>
-      </main>
+
+        {/* Leaderboard link */}
+        <Link
+          href="/leaderboard"
+          className="mt-8 text-white/40 hover:text-[#00D4FF] transition-colors text-sm"
+        >
+          🏆 View Leaderboard
+        </Link>
+      </div>
     </div>
   );
 }
