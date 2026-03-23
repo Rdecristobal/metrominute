@@ -287,9 +287,12 @@ export class GameEngine {
       this.state.score -= (challenge.scoreDecrement || 10);
 
       if (this.state.score <= 0 || this.state.survivalTime <= 0) {
-        this.endChallenge();
-        if (this.state.survivalTime <= 0 && this.state.score > 0) {
-          return { challengeEnded: true, victory: this.checkVictory() };
+        // Verificar victoria ANTES de llamar endChallenge
+        const isVictory = this.state.survivalTime <= 0 && this.state.score > 0;
+        this.endChallenge(isVictory);
+        
+        if (isVictory) {
+          return { challengeEnded: true, victory: true };
         }
         return { challengeEnded: true, gameOver: true };
       }
@@ -297,8 +300,8 @@ export class GameEngine {
       this.state.timeLeft--;
 
       if (this.state.timeLeft <= 0) {
-        this.endChallenge();
         const victory = this.checkVictory();
+        this.endChallenge(victory);
         const gameOver = !victory;
         return { challengeEnded: true, victory, gameOver };
       }
@@ -330,7 +333,7 @@ export class GameEngine {
     return PHASES.length - 1;
   }
 
-  private endChallenge(): void {
+  private endChallenge(isVictory: boolean = false): void {
     this.state.isPlaying = false;
     this.state.isGameOver = true;
 
@@ -343,7 +346,7 @@ export class GameEngine {
     }
 
     // Incrementar challengesCompleted si pasó el challenge
-    if (this.checkVictory()) {
+    if (isVictory) {
       this.state.challengesCompleted++;
     }
 
