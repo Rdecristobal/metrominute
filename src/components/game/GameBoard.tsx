@@ -18,6 +18,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const movementIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const decoyIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevPhaseRef = useRef<number>(0);
   const screenRef = useRef<string>('countdown');
   const isTransitioningRef = useRef<boolean>(false);
@@ -103,9 +104,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
     if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     if (movementIntervalRef.current) clearInterval(movementIntervalRef.current);
     if (decoyIntervalRef.current) clearInterval(decoyIntervalRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     gameLoopRef.current = null;
     movementIntervalRef.current = null;
     decoyIntervalRef.current = null;
+    countdownIntervalRef.current = null;
   };
 
   const createExplosion = (x: number, y: number, color: string, count: number = 12) => {
@@ -220,12 +223,6 @@ export default function GameBoard({ mode }: GameBoardProps) {
           }, 500);
         }
       }
-
-      if (result.newChallenge !== undefined) {
-        setTimeout(() => {
-          handleChallengeComplete(result.newChallenge!);
-        }, 300);
-      }
     }
   }, [gameState.soundEnabled, gameState.combo, gameState.multiplier, mode]);
 
@@ -270,20 +267,26 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const showCountdown = (challengeIndex: number) => {
-    // Limpiar TODO antes del countdown para evitar glitch
+    // NUEVO: Limpiar intervalo del countdown anterior
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+
     cleanup();
     engineRef.current?.clearTargets();
     setTargets([]);
     setParticles([]);
     setFloatingScores([]);
     setRipples([]);
-    
+
     const challenge = CHALLENGES[challengeIndex];
     setCountdownTitle(challenge.name);
     setCountdown(3);
     setScreen('countdown');
 
-    const interval = setInterval(() => {
+    // CAMBIO: Guardar referencia del intervalo
+    countdownIntervalRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev === null) return null;
         if (prev > 1) {
@@ -293,7 +296,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
           playSound('golden', gameState.soundEnabled);
           return 0;
         } else {
-          clearInterval(interval);
+          clearInterval(countdownIntervalRef.current!);
+          countdownIntervalRef.current = null;
           // Delay para que se vea el "GO" antes de empezar
           setTimeout(() => {
             startChallenge(challengeIndex);

@@ -28,6 +28,8 @@ export interface GameState {
   challengeTimeLimit: number;
   currentChallengeGolden: boolean;
   survivalTime: number;
+  challengeCompleted: boolean;
+  isTransitioning: boolean;
   // Statistics
   totalClicks: number;
   correctClicks: number;

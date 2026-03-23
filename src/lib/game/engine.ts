@@ -47,6 +47,8 @@ export class GameEngine {
       challengeTimeLimit: 30,
       currentChallengeGolden: false,
       survivalTime: 0,
+      challengeCompleted: false,
+      isTransitioning: false,
       totalClicks: 0,
       correctClicks: 0,
       currentStreak: 0,
@@ -112,6 +114,10 @@ export class GameEngine {
     this.state.currentChallenge = challengeIndex;
     this.state.currentChallengeScoreRequired = challenge.scoreRequired;
     this.state.currentChallengeGolden = challenge.golden;
+
+    // NUEVO: Resetear flags de transición
+    this.state.challengeCompleted = false;
+    this.state.isTransitioning = false;
 
     if (challenge.isSurvival) {
       this.state.score = 100;
@@ -219,13 +225,12 @@ export class GameEngine {
     this.state.combo++;
     this.state.multiplier = Math.min(Math.floor(this.state.combo / 5) + 1, 5);
 
-    // Check if challenge is complete
+    // Check if challenge is complete - SOLO MARCAR FLAG, NO disparar transición
     const challenge = CHALLENGES[this.state.currentChallenge];
     const isSurvival = challenge?.isSurvival || false;
-    let newChallenge: number | undefined;
 
     if (!isSurvival && this.state.mode === 'normal' && this.state.score >= this.state.currentChallengeScoreRequired) {
-      newChallenge = this.state.currentChallenge + 1;
+      this.state.challengeCompleted = true;
     }
 
     if (this.state.multiplier > this.state.maxMultiplier) {
@@ -240,7 +245,7 @@ export class GameEngine {
     this.state.totalClicks++;
 
     this.notify();
-    return { success: true, points, shouldSpawnMore: true, newChallenge };
+    return { success: true, points, shouldSpawnMore: true };
   }
 
   private handleDecoyClick(x: number, y: number): { success: boolean; points: number; shouldSpawnMore: boolean } {
@@ -280,6 +285,11 @@ export class GameEngine {
   }
 
   private normalTick(): { challengeEnded?: boolean; victory?: boolean; gameOver?: boolean } {
+    // NUEVO: Guarda contra transiciones múltiples
+    if (this.state.isTransitioning) {
+      return {};
+    }
+
     const challenge = CHALLENGES[this.state.currentChallenge];
 
     if (challenge?.isSurvival) {
@@ -290,7 +300,7 @@ export class GameEngine {
         // Verificar victoria ANTES de llamar endChallenge
         const isVictory = this.state.survivalTime <= 0 && this.state.score > 0;
         this.endChallenge(isVictory);
-        
+
         if (isVictory) {
           return { challengeEnded: true, victory: true };
         }
@@ -299,7 +309,8 @@ export class GameEngine {
     } else {
       this.state.timeLeft--;
 
-      if (this.state.timeLeft <= 0) {
+      // CAMBIO: Detectar fin por TIEMPO o por SCORE
+      if (this.state.timeLeft <= 0 || this.state.challengeCompleted) {
         const victory = this.checkVictory();
         this.endChallenge(victory);
         const gameOver = !victory;
@@ -334,6 +345,9 @@ export class GameEngine {
   }
 
   private endChallenge(isVictory: boolean = false): void {
+    // NUEVO: Marcar transición en progreso
+    this.state.isTransitioning = true;
+
     this.state.isPlaying = false;
     this.state.isGameOver = true;
 
