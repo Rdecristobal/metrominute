@@ -16,7 +16,7 @@ export const CHALLENGES: Challenge[] = [
   { name: '5: SURVIVAL', startTime: 30, endTime: 0, targetMovement: true, movementInterval: 800, decoys: 5, scoreRequired: 0, golden: false, isSurvival: true, survivalTime: 30, scoreDecrement: 10 }
 ];
 
-const TARGET_SIZE = 60;
+const TARGET_SIZE = 45;
 const HEADER_HEIGHT = 140;
 
 export class GameEngine {

@@ -284,6 +284,13 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const startChallenge = (challengeIndex: number) => {
     if (!engineRef.current) return;
 
+    // Limpiar targets y estados visuales antes de empezar nuevo challenge
+    setTargets([]);
+    setParticles([]);
+    setFloatingScores([]);
+    setRipples([]);
+    cleanup();
+
     engineRef.current.startChallenge(challengeIndex);
     setScreen('game');
 
@@ -379,14 +386,22 @@ export default function GameBoard({ mode }: GameBoardProps) {
     }
   };
 
-  const moveTargets = (gameWidth: number, gameHeight: number) => {
-    const newTargets = targets.map(target => ({
+  const moveTargets = useCallback((gameWidth: number, gameHeight: number) => {
+    if (!engineRef.current) return;
+    
+    // Obtener targets directamente del engine, no del estado React
+    const currentTargets = engineRef.current.getTargets();
+    if (currentTargets.length === 0) return;
+    
+    const newTargets = currentTargets.map(target => ({
       ...target,
       x: Math.random() * (gameWidth - target.size),
       y: 140 + Math.random() * (gameHeight - 140 - target.size)
     }));
+    
+    // Actualizar el estado y también las posiciones en el engine
     setTargets(newTargets);
-  };
+  }, []);
 
   const toggleDecoys = () => {
     setTargets(prev => prev.map((t: TargetType) => 
