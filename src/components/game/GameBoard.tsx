@@ -20,6 +20,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const decoyIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevPhaseRef = useRef<number>(0);
   const screenRef = useRef<string>('countdown');
+  const isTransitioningRef = useRef<boolean>(false);
 
   const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('countdown');
   const [targets, setTargets] = useState<Array<{ id: string; x: number; y: number; type: 'normal' | 'golden' | 'decoy'; size: number }>>([]);
@@ -81,8 +82,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
         maxStreakMax: state.maxStreakMax,
         challengesCompleted: state.challengesCompleted
       });
-      // Solo actualizar targets si estamos en pantalla de juego
-      if (screenRef.current === 'game') {
+      // Solo actualizar targets si estamos en pantalla de juego y NO en transición
+      if (screenRef.current === 'game' && !isTransitioningRef.current) {
         setTargets(engineRef.current!.getTargets());
       }
     });
@@ -301,6 +302,9 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const startChallenge = (challengeIndex: number) => {
     if (!engineRef.current) return;
 
+    // Desbloquear actualizaciones del subscribe
+    isTransitioningRef.current = false;
+
     // Limpiar targets del engine (la UI ya se limpió en showCountdown)
     engineRef.current.clearTargets();
 
@@ -351,6 +355,9 @@ export default function GameBoard({ mode }: GameBoardProps) {
       }
 
       if (result.challengeEnded) {
+        // Bloquear actualizaciones del subscribe durante la transición
+        isTransitioningRef.current = true;
+        
         // Limpiar TODO inmediatamente cuando termina el challenge
         cleanup();
         engineRef.current?.clearTargets();
@@ -374,6 +381,9 @@ export default function GameBoard({ mode }: GameBoardProps) {
       // Handle phase change in classic mode
       const engineState = engineRef.current.getState();
       if (mode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
+        // Bloquear actualizaciones durante la transición
+        isTransitioningRef.current = true;
+        
         // Limpiar targets de la fase anterior
         engineRef.current?.clearTargets();
         setTargets([]);
@@ -384,7 +394,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
         setShowPhaseIndicator(true);
         setTimeout(() => setShowPhaseIndicator(false), 2000);
         
-        // Spawnear nuevos targets para la nueva fase
+        // Desbloquear y spawnear nuevos targets
+        isTransitioningRef.current = false;
         setupMovementAndDecoys();
         if (gameAreaRef.current) {
           engineRef.current?.spawnTarget(gameAreaRef.current.offsetWidth, gameAreaRef.current.offsetHeight, false);
