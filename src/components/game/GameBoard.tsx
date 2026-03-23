@@ -92,6 +92,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
     return () => {
       unsubscribe();
       cleanup();
+      // Limpiar también el intervalo del countdown al desmontar
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
     };
   }, [mode]);
 
@@ -104,11 +109,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
     if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     if (movementIntervalRef.current) clearInterval(movementIntervalRef.current);
     if (decoyIntervalRef.current) clearInterval(decoyIntervalRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    // NOTA: countdownIntervalRef se maneja separadamente en showCountdown()
     gameLoopRef.current = null;
     movementIntervalRef.current = null;
     decoyIntervalRef.current = null;
-    countdownIntervalRef.current = null;
+    // countdownIntervalRef NO se limpia aquí, se maneja en showCountdown()
   };
 
   const createExplosion = (x: number, y: number, color: string, count: number = 12) => {
@@ -267,13 +272,26 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const showCountdown = (challengeIndex: number) => {
-    // NUEVO: Limpiar intervalo del countdown anterior
+    // Limpiar intervalo del countdown anterior primero
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
     }
 
-    cleanup();
+    // Limpiar otros intervalos pero NO el del countdown que acabamos de limpiar
+    if (gameLoopRef.current) {
+      clearInterval(gameLoopRef.current);
+      gameLoopRef.current = null;
+    }
+    if (movementIntervalRef.current) {
+      clearInterval(movementIntervalRef.current);
+      movementIntervalRef.current = null;
+    }
+    if (decoyIntervalRef.current) {
+      clearInterval(decoyIntervalRef.current);
+      decoyIntervalRef.current = null;
+    }
+
     engineRef.current?.clearTargets();
     setTargets([]);
     setParticles([]);
@@ -285,7 +303,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
     setCountdown(3);
     setScreen('countdown');
 
-    // CAMBIO: Guardar referencia del intervalo
+    // Crear nuevo intervalo del countdown
     countdownIntervalRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev === null) return null;
@@ -382,7 +400,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
           if (engineState.challengesCompleted >= CHALLENGES.length) {
             handleVictory();
           } else {
-            handleChallengeComplete(engineState.challengesCompleted);
+            // CORRECCIÓN: Usar currentChallenge + 1 como índice del siguiente challenge
+            handleChallengeComplete(engineState.currentChallenge + 1);
           }
         } else if (result.gameOver) {
           handleGameOver();
@@ -801,17 +820,6 @@ export default function GameBoard({ mode }: GameBoardProps) {
         >
           INICIO
         </button>
-      </div>
-    </div>
-  );
-
-  const renderCountdownScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full bg-black/80">
-      <h2 className="text-4xl font-bold text-pink-500 mb-8" style={{ textShadow: '0 0 20px rgba(255, 20, 147, 0.8)' }}>
-        {countdownTitle}
-      </h2>
-      <div className={`text-9xl font-black ${countdown === 0 ? 'animate-pulse' : ''}`} style={{ textShadow: '0 0 40px rgba(255, 255, 255, 0.8)' }}>
-        {countdown === 0 ? 'GO' : countdown}
       </div>
     </div>
   );

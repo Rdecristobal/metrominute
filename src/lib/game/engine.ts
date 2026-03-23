@@ -381,13 +381,6 @@ export class GameEngine {
     return this.state.score >= this.state.currentChallengeScoreRequired;
   }
 
-  nextChallenge(): void {
-    this.state.challengesCompleted++;
-    if (this.state.challengesCompleted < CHALLENGES.length) {
-      this.startChallenge(this.state.challengesCompleted);
-    }
-  }
-
   saveHighScore(): boolean {
     if (this.state.score > this.state.highScore) {
       this.state.highScore = this.state.score;
