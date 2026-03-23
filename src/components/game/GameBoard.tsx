@@ -152,8 +152,9 @@ export default function GameBoard({ mode }: GameBoardProps) {
     const clientX = e.clientX;
     const clientY = e.clientY;
 
-    const result = engineRef.current.clickTarget(targetId, clientX, clientY);
+    // Guardar referencia al target ANTES de eliminarlo
     const target = engineRef.current.getTargets().find(t => t.id === targetId);
+    const result = engineRef.current.clickTarget(targetId, clientX, clientY);
 
     if (result.success && target) {
       const isGolden = target.type === 'golden';
