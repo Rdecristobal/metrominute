@@ -301,21 +301,18 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const startChallenge = (challengeIndex: number) => {
     if (!engineRef.current) return;
 
-    // Limpiar targets y estados visuales antes de empezar nuevo challenge
-    setTargets([]);
-    setParticles([]);
-    setFloatingScores([]);
-    setRipples([]);
-    cleanup();
+    // Limpiar targets del engine (la UI ya se limpió en showCountdown)
+    engineRef.current.clearTargets();
 
     engineRef.current.startChallenge(challengeIndex);
     setScreen('game');
 
+    // Pequeño delay para que el DOM se actualice
     setTimeout(() => {
       startGameLoop();
       setupMovementAndDecoys();
       spawnInitialTargets();
-    }, 100);
+    }, 50);
   };
 
   const spawnInitialTargets = () => {
@@ -354,7 +351,14 @@ export default function GameBoard({ mode }: GameBoardProps) {
       }
 
       if (result.challengeEnded) {
+        // Limpiar TODO inmediatamente cuando termina el challenge
         cleanup();
+        engineRef.current?.clearTargets();
+        setTargets([]);
+        setParticles([]);
+        setFloatingScores([]);
+        setRipples([]);
+        
         if (result.victory) {
           if (gameState.challengesCompleted + 1 >= CHALLENGES.length) {
             handleVictory();
@@ -370,12 +374,22 @@ export default function GameBoard({ mode }: GameBoardProps) {
       // Handle phase change in classic mode
       const engineState = engineRef.current.getState();
       if (mode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
+        // Limpiar targets de la fase anterior
+        engineRef.current?.clearTargets();
+        setTargets([]);
+        
         const phaseIndex = engineState.currentPhase;
         const phase = PHASES[phaseIndex];
         setPhaseIndicator(phase.name);
         setShowPhaseIndicator(true);
         setTimeout(() => setShowPhaseIndicator(false), 2000);
+        
+        // Spawnear nuevos targets para la nueva fase
         setupMovementAndDecoys();
+        if (gameAreaRef.current) {
+          engineRef.current?.spawnTarget(gameAreaRef.current.offsetWidth, gameAreaRef.current.offsetHeight, false);
+        }
+        
         prevPhaseRef.current = engineState.currentPhase;
       }
     }, 1000);
