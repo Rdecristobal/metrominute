@@ -342,6 +342,11 @@ export class GameEngine {
       this.state.maxStreakMax = this.state.maxStreak;
     }
 
+    // Incrementar challengesCompleted si pasó el challenge
+    if (this.checkVictory()) {
+      this.state.challengesCompleted++;
+    }
+
     this.notify();
   }
 

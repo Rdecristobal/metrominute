@@ -366,11 +366,14 @@ export default function GameBoard({ mode }: GameBoardProps) {
         setFloatingScores([]);
         setRipples([]);
         
+        // Obtener estado actualizado del engine, no de React
+        const engineState = engineRef.current.getState();
+        
         if (result.victory) {
-          if (gameState.challengesCompleted + 1 >= CHALLENGES.length) {
+          if (engineState.challengesCompleted >= CHALLENGES.length) {
             handleVictory();
           } else {
-            handleChallengeComplete(gameState.currentChallenge + 1);
+            handleChallengeComplete(engineState.challengesCompleted);
           }
         } else if (result.gameOver) {
           handleGameOver();
