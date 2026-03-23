@@ -99,6 +99,7 @@ export interface FloatingScore {
   y: number;
   score: number;
   isGolden: boolean;
+  isDecoy?: boolean;
 }
 
 export interface Ripple {

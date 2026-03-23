@@ -129,13 +129,14 @@ export default function GameBoard({ mode }: GameBoardProps) {
     }, 600);
   };
 
-  const showFloatingScore = (x: number, y: number, score: number, isGolden: boolean) => {
+  const showFloatingScore = (x: number, y: number, score: number, isGolden: boolean, isDecoy: boolean = false) => {
     const newScore: FloatingScore = {
       id: `float-${Date.now()}`,
       x,
       y,
       score,
-      isGolden
+      isGolden,
+      isDecoy
     };
     setFloatingScores(prev => [...prev, newScore]);
     setTimeout(() => {
@@ -168,10 +169,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
     if (result.success && target) {
       const isGolden = target.type === 'golden';
-      const color = isGolden ? '#FFD700' : (target.type === 'decoy' ? '#10B981' : '#00D4FF');
+      const isDecoy = target.type === 'decoy';
+      const color = isGolden ? '#FFD700' : (isDecoy ? '#10B981' : '#00D4FF');
 
       createExplosion(clientX, clientY, color, isGolden ? 20 : 12);
-      showFloatingScore(clientX, clientY, result.points, isGolden);
+      showFloatingScore(clientX, clientY, result.points, isGolden, isDecoy);
       createRipple(clientX, clientY, color);
 
       if (isGolden || target.type === 'decoy') {
@@ -292,7 +294,10 @@ export default function GameBoard({ mode }: GameBoardProps) {
           return 0;
         } else {
           clearInterval(interval);
-          startChallenge(challengeIndex);
+          // Delay para que se vea el "GO" antes de empezar
+          setTimeout(() => {
+            startChallenge(challengeIndex);
+          }, 500);
           return null;
         }
       });
@@ -607,8 +612,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
           style={{
             left: fs.x,
             top: fs.y,
-            color: fs.isGolden ? '#FFD700' : '#00D4FF',
-            textShadow: fs.isGolden ? '0 0 20px rgba(255, 215, 0, 0.8)' : '0 0 10px rgba(0, 212, 255, 0.6)',
+            color: fs.isDecoy ? '#FF4444' : (fs.isGolden ? '#FFD700' : '#00D4FF'),
+            textShadow: fs.isDecoy ? '0 0 15px rgba(255, 68, 68, 0.8)' : (fs.isGolden ? '0 0 20px rgba(255, 215, 0, 0.8)' : '0 0 10px rgba(0, 212, 255, 0.6)'),
             fontSize: fs.isGolden ? '28px' : '20px'
           }}
           animate={{
@@ -854,16 +859,33 @@ export default function GameBoard({ mode }: GameBoardProps) {
             <div className="absolute top-[110px] left-1/2 transform -translate-x-1/2 w-[60%] h-[25px] bg-white/10 rounded-full overflow-hidden border-2 border-white/20 z-5">
               <div
                 className={`h-full transition-all duration-300 ${
-                  gameState.score >= gameState.currentChallengeScoreRequired * 0.8
-                    ? 'bg-gradient-to-r from-green-400 to-green-600'
-                    : gameState.score >= gameState.currentChallengeScoreRequired * 0.5
-                      ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-                      : 'bg-gradient-to-r from-cyan-400 to-blue-500'
+                  gameState.survivalTime > 0
+                    ? // Survival mode - score decrements
+                      gameState.score >= 70
+                        ? 'bg-gradient-to-r from-green-400 to-green-600'
+                        : gameState.score >= 40
+                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
+                          : 'bg-gradient-to-r from-red-400 to-red-600'
+                    : // Normal challenges
+                      gameState.score >= gameState.currentChallengeScoreRequired * 0.8
+                        ? 'bg-gradient-to-r from-green-400 to-green-600'
+                        : gameState.score >= gameState.currentChallengeScoreRequired * 0.5
+                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
+                          : 'bg-gradient-to-r from-cyan-400 to-blue-500'
                 }`}
-                style={{ width: `${Math.min((gameState.score / gameState.currentChallengeScoreRequired) * 100, 100)}%` }}
+                style={{ 
+                  width: `${
+                    gameState.survivalTime > 0
+                      ? Math.min(gameState.score, 100) // Survival: 0-100%
+                      : Math.min((gameState.score / gameState.currentChallengeScoreRequired) * 100, 100)
+                  }%` 
+                }}
               />
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-white whitespace-nowrap" style={{ textShadow: '0 0 5px rgba(0,0,0,0.8)' }}>
-                {gameState.score} / {gameState.currentChallengeScoreRequired}
+                {gameState.survivalTime > 0 
+                  ? `${gameState.score} (Survival: ${gameState.survivalTime}s)` 
+                  : `${gameState.score} / ${gameState.currentChallengeScoreRequired}`
+                }
               </div>
             </div>
           )}
