@@ -267,8 +267,9 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const showCountdown = (challengeIndex: number) => {
-    // Limpiar todo antes del countdown para evitar glitch
+    // Limpiar TODO antes del countdown para evitar glitch
     cleanup();
+    engineRef.current?.clearTargets();
     setTargets([]);
     setParticles([]);
     setFloatingScores([]);
@@ -390,6 +391,12 @@ export default function GameBoard({ mode }: GameBoardProps) {
     if (decoyIntervalRef.current) clearInterval(decoyIntervalRef.current);
 
     if (phaseConfig?.targetMovement && phaseConfig.movementInterval) {
+      // Primer movimiento inmediato después de un breve delay para que aparezcan los targets
+      setTimeout(() => {
+        moveTargets(gameArea.offsetWidth, gameArea.offsetHeight);
+      }, 500);
+      
+      // Luego el intervalo regular
       movementIntervalRef.current = setInterval(() => {
         moveTargets(gameArea.offsetWidth, gameArea.offsetHeight);
       }, phaseConfig.movementInterval);

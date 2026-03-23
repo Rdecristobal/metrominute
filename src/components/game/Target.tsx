@@ -12,6 +12,7 @@ interface TargetProps {
 export default function Target({ target, onClick }: TargetProps) {
   const targetRef = useRef<HTMLDivElement>(null);
 
+  // Actualizar posición con transición CSS suave
   useEffect(() => {
     if (targetRef.current) {
       targetRef.current.style.left = `${target.x}px`;
@@ -20,9 +21,14 @@ export default function Target({ target, onClick }: TargetProps) {
   }, [target.x, target.y]);
 
   const getStyles = () => {
+    const baseStyle = {
+      transition: 'left 0.5s ease, top 0.5s ease', // Transición suave para movimiento
+    };
+
     switch (target.type) {
       case 'golden':
         return {
+          ...baseStyle,
           background: '#FFD700',
           border: '3px solid #FFD700',
           boxShadow: '0 0 25px rgba(255, 215, 0, 0.6), 0 0 50px rgba(255, 215, 0, 0.3)',
@@ -30,12 +36,14 @@ export default function Target({ target, onClick }: TargetProps) {
         };
       case 'decoy':
         return {
+          ...baseStyle,
           background: '#10B981',
           border: '2px solid rgba(255,255,255,0.3)',
           animation: 'decoyPulse 2s ease-in-out infinite'
         };
       default:
         return {
+          ...baseStyle,
           background: '#00D4FF',
           boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)',
           animation: 'targetSpawn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'

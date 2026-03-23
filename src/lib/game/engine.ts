@@ -407,6 +407,10 @@ export class GameEngine {
     // No notificamos para evitar sobrescritura - el estado React se actualiza directamente
   }
 
+  clearTargets(): void {
+    this.targets.clear();
+  }
+
   getTargets(): Target[] {
     return Array.from(this.targets.values());
   }
