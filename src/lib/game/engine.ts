@@ -398,6 +398,15 @@ export class GameEngine {
     this.notify();
   }
 
+  moveAllTargets(gameWidth: number, gameHeight: number): void {
+    this.targets.forEach((target, id) => {
+      target.x = Math.random() * (gameWidth - target.size);
+      target.y = HEADER_HEIGHT + Math.random() * (gameHeight - HEADER_HEIGHT - target.size);
+      this.targets.set(id, target);
+    });
+    // No notificamos para evitar sobrescritura - el estado React se actualiza directamente
+  }
+
   getTargets(): Target[] {
     return Array.from(this.targets.values());
   }

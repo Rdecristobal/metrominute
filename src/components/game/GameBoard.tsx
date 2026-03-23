@@ -19,6 +19,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const movementIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const decoyIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevPhaseRef = useRef<number>(0);
+  const screenRef = useRef<string>('countdown');
 
   const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('countdown');
   const [targets, setTargets] = useState<Array<{ id: string; x: number; y: number; type: 'normal' | 'golden' | 'decoy'; size: number }>>([]);
@@ -80,7 +81,10 @@ export default function GameBoard({ mode }: GameBoardProps) {
         maxStreakMax: state.maxStreakMax,
         challengesCompleted: state.challengesCompleted
       });
-      setTargets(engineRef.current!.getTargets());
+      // Solo actualizar targets si estamos en pantalla de juego
+      if (screenRef.current === 'game') {
+        setTargets(engineRef.current!.getTargets());
+      }
     });
 
     return () => {
@@ -88,6 +92,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
       cleanup();
     };
   }, [mode]);
+
+  // Sincronizar screenRef con screen
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
 
   const cleanup = () => {
     if (gameLoopRef.current) clearInterval(gameLoopRef.current);
@@ -258,6 +267,13 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const showCountdown = (challengeIndex: number) => {
+    // Limpiar todo antes del countdown para evitar glitch
+    cleanup();
+    setTargets([]);
+    setParticles([]);
+    setFloatingScores([]);
+    setRipples([]);
+    
     const challenge = CHALLENGES[challengeIndex];
     setCountdownTitle(challenge.name);
     setCountdown(3);
@@ -389,18 +405,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const moveTargets = useCallback((gameWidth: number, gameHeight: number) => {
     if (!engineRef.current) return;
     
-    // Obtener targets directamente del engine, no del estado React
-    const currentTargets = engineRef.current.getTargets();
-    if (currentTargets.length === 0) return;
+    // Mover targets directamente en el engine
+    engineRef.current.moveAllTargets(gameWidth, gameHeight);
     
-    const newTargets = currentTargets.map(target => ({
-      ...target,
-      x: Math.random() * (gameWidth - target.size),
-      y: 140 + Math.random() * (gameHeight - 140 - target.size)
-    }));
-    
-    // Actualizar el estado y también las posiciones en el engine
-    setTargets(newTargets);
+    // Actualizar estado React con las nuevas posiciones
+    setTargets(engineRef.current.getTargets());
   }, []);
 
   const toggleDecoys = () => {
