@@ -18,7 +18,7 @@ export function resumeAudioContext(): void {
   }
 }
 
-function playTone(frequency: number, duration: number, type: OscillatorType = 'sine'): void {
+function playTone(frequency: number, duration: number, type: OscillatorType = 'sine', volume: number = 0.3): void {
   const ctx = getAudioContext();
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
@@ -29,11 +29,83 @@ function playTone(frequency: number, duration: number, type: OscillatorType = 's
   oscillator.frequency.value = frequency;
   oscillator.type = type;
 
-  gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+  gainNode.gain.setValueAtTime(volume, ctx.currentTime);
   gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
 
   oscillator.start(ctx.currentTime);
   oscillator.stop(ctx.currentTime + duration);
+}
+
+// Arcade-style pop sound for normal targets
+function playPopSound(): void {
+  const ctx = getAudioContext();
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  oscillator.frequency.setValueAtTime(600, ctx.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+  oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.1);
+
+  oscillator.type = 'sine';
+
+  gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+  oscillator.start(ctx.currentTime);
+  oscillator.stop(ctx.currentTime + 0.15);
+}
+
+// Error buzz sound for decoys
+function playErrorBuzz(): void {
+  const ctx = getAudioContext();
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  oscillator.frequency.setValueAtTime(150, ctx.currentTime);
+  oscillator.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.2);
+
+  oscillator.type = 'sawtooth';
+
+  gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+  oscillator.start(ctx.currentTime);
+  oscillator.stop(ctx.currentTime + 0.2);
+}
+
+// Coin collect sound for golden targets
+function playCoinCollect(): void {
+  const ctx = getAudioContext();
+  const oscillator1 = ctx.createOscillator();
+  const oscillator2 = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  oscillator1.connect(gainNode);
+  oscillator2.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  oscillator1.frequency.setValueAtTime(1200, ctx.currentTime);
+  oscillator1.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.1);
+
+  oscillator2.frequency.setValueAtTime(1600, ctx.currentTime);
+  oscillator2.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.1);
+
+  oscillator1.type = 'square';
+  oscillator2.type = 'square';
+
+  gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+
+  oscillator1.start(ctx.currentTime);
+  oscillator2.start(ctx.currentTime);
+  oscillator1.stop(ctx.currentTime + 0.15);
+  oscillator2.stop(ctx.currentTime + 0.15);
 }
 
 export function playSound(soundType: SoundType, enabled: boolean = true): void {
@@ -41,34 +113,33 @@ export function playSound(soundType: SoundType, enabled: boolean = true): void {
 
   switch (soundType) {
     case 'hit':
-      playTone(800, 100, 'sine');
+      playPopSound();
       break;
     case 'golden':
-      playTone(1200, 150, 'triangle');
-      setTimeout(() => playTone(1500, 100, 'sine'), 100);
+      playCoinCollect();
       break;
     case 'combo':
-      playTone(600, 50, 'square');
-      setTimeout(() => playTone(800, 50, 'square'), 50);
-      setTimeout(() => playTone(1000, 100, 'square'), 100);
+      playTone(600, 50, 'square', 0.25);
+      setTimeout(() => playTone(800, 50, 'square', 0.25), 50);
+      setTimeout(() => playTone(1000, 100, 'square', 0.25), 100);
       break;
     case 'gameover':
-      playTone(400, 200, 'sawtooth');
-      setTimeout(() => playTone(300, 200, 'sawtooth'), 200);
+      playTone(400, 200, 'sawtooth', 0.3);
+      setTimeout(() => playTone(300, 200, 'sawtooth', 0.3), 200);
       break;
     case 'newrecord':
-      playTone(600, 100, 'sine');
-      setTimeout(() => playTone(800, 100, 'sine'), 100);
-      setTimeout(() => playTone(1000, 100, 'sine'), 200);
-      setTimeout(() => playTone(1200, 200, 'sine'), 300);
+      playTone(600, 100, 'sine', 0.3);
+      setTimeout(() => playTone(800, 100, 'sine', 0.3), 100);
+      setTimeout(() => playTone(1000, 100, 'sine', 0.3), 200);
+      setTimeout(() => playTone(1200, 200, 'sine', 0.3), 300);
       break;
     case 'error':
-      playTone(400, 150, 'sawtooth');
+      playErrorBuzz();
       break;
     case 'challenge-success':
-      playTone(600, 100, 'sine');
-      setTimeout(() => playTone(800, 100, 'sine'), 100);
-      setTimeout(() => playTone(1000, 150, 'sine'), 200);
+      playTone(600, 100, 'sine', 0.3);
+      setTimeout(() => playTone(800, 100, 'sine', 0.3), 100);
+      setTimeout(() => playTone(1000, 150, 'sine', 0.3), 200);
       break;
   }
 }

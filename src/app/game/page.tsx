@@ -6,9 +6,10 @@ import GameBoard from "@/components/game/GameBoard";
 
 function GameContent() {
   const searchParams = useSearchParams();
-  const mode = (searchParams.get("mode") as 'classic' | 'normal') || 'normal';
+  const modeParam = searchParams.get("mode");
+  const mode = (modeParam as 'classic' | 'normal' | null);
 
-  return <GameBoard mode={mode} />;
+  return <GameBoard mode={mode || undefined} />;
 }
 
 export default function GamePage() {

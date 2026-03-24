@@ -168,9 +168,6 @@ export class GameEngine {
   spawnDecoy(gameWidth: number, gameHeight: number): Target | null {
     if (!this.state.isPlaying || this.state.isGameOver) return null;
 
-    // NEVER spawn decoys in classic mode
-    if (this.state.mode === 'classic') return null;
-
     const maxX = gameWidth - TARGET_SIZE;
     const maxY = gameHeight - TARGET_SIZE;
 

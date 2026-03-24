@@ -9,10 +9,10 @@ import { playSound, vibrate } from "@/lib/game/audio";
 import { useRouter } from "next/navigation";
 
 interface GameBoardProps {
-  mode: 'classic' | 'normal';
+  mode?: 'classic' | 'normal';
 }
 
-export default function GameBoard({ mode }: GameBoardProps) {
+export default function GameBoard({ mode: propMode }: GameBoardProps) {
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
@@ -20,10 +20,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const decoyIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const prevPhaseRef = useRef<number>(0);
-  const screenRef = useRef<string>('countdown');
+  const screenRef = useRef<string>(propMode ? 'countdown' : 'home');
   const isTransitioningRef = useRef<boolean>(false);
 
-  const [screen, setScreen] = useState<'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('countdown');
+  const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>(propMode ? 'countdown' : 'home');
+  const [selectedMode, setSelectedMode] = useState<'classic' | 'normal'>(propMode || 'normal');
   const [targets, setTargets] = useState<Array<{ id: string; x: number; y: number; type: 'normal' | 'golden' | 'decoy'; size: number }>>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
@@ -40,7 +41,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const [gameState, setGameState] = useState(() => ({
     score: 0,
     highScore: loadHighScore(),
-    timeLeft: mode === 'classic' ? 60 : 30,
+    timeLeft: selectedMode === 'classic' ? 60 : 30,
     combo: 0,
     multiplier: 1,
     soundEnabled: loadSoundEnabled(),
@@ -65,7 +66,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const router = useRouter();
 
   useEffect(() => {
-    engineRef.current = new GameEngine(mode, loadHighScore(), loadSoundEnabled());
+    engineRef.current = new GameEngine(selectedMode, loadHighScore(), loadSoundEnabled());
 
     const unsubscribe = engineRef.current.subscribe((state) => {
       setGameState({
@@ -98,12 +99,20 @@ export default function GameBoard({ mode }: GameBoardProps) {
         countdownIntervalRef.current = null;
       }
     };
-  }, [mode]);
+  }, [selectedMode]);
 
   // Sincronizar screenRef con screen
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+
+  // Auto-start game if mode is passed as prop (for backward compatibility with direct /game?mode=X links)
+  useEffect(() => {
+    if (propMode) {
+      startGame();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const cleanup = () => {
     if (gameLoopRef.current) clearInterval(gameLoopRef.current);
@@ -222,14 +231,14 @@ export default function GameBoard({ mode }: GameBoardProps) {
         // Spawn golden target with probability in normal mode
         const phaseConfig = engineRef.current?.getPhaseConfig();
         const hasGolden = phaseConfig && 'golden' in phaseConfig && phaseConfig.golden;
-        if (mode === 'normal' && hasGolden && Math.random() < 0.25) {
+        if (selectedMode === 'normal' && hasGolden && Math.random() < 0.25) {
           setTimeout(() => {
             engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, true);
           }, 500);
         }
       }
     }
-  }, [gameState.soundEnabled, gameState.combo, gameState.multiplier, mode]);
+  }, [gameState.soundEnabled, gameState.combo, gameState.multiplier, selectedMode]);
 
   const handleChallengeComplete = (nextChallenge: number) => {
     playSound('challenge-success', gameState.soundEnabled);
@@ -355,14 +364,14 @@ export default function GameBoard({ mode }: GameBoardProps) {
     engineRef.current.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, false);
 
     // Only spawn golden targets in 'normal' mode (Challenge mode)
-    if (mode === 'normal' && 'golden' in phaseConfig! && phaseConfig?.golden && Math.random() < 0.25) {
+    if (selectedMode === 'normal' && 'golden' in phaseConfig! && phaseConfig?.golden && Math.random() < 0.25) {
       setTimeout(() => {
         engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, true);
       }, 400);
     }
 
-    // NEVER spawn decoys in classic mode
-    if (mode === 'normal' && phaseConfig?.decoys && phaseConfig.decoys > 0) {
+    // Spawn decoys in BOTH modes
+    if (phaseConfig?.decoys && phaseConfig.decoys > 0) {
       for (let i = 0; i < phaseConfig.decoys; i++) {
         engineRef.current.spawnDecoy(gameArea.offsetWidth, gameArea.offsetHeight);
       }
@@ -412,7 +421,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
       // Handle phase change in classic mode
       const engineState = engineRef.current.getState();
-      if (mode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
+      if (selectedMode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
         // Bloquear actualizaciones durante la transición
         isTransitioningRef.current = true;
         
@@ -459,8 +468,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
       }, phaseConfig.movementInterval);
     }
 
-    // NEVER setup decoys in classic mode
-    if (mode === 'normal' && phaseConfig?.decoys && phaseConfig.decoys > 0) {
+    // Setup decoys in BOTH modes
+    if (phaseConfig?.decoys && phaseConfig.decoys > 0) {
       decoyIntervalRef.current = setInterval(() => {
         toggleDecoys();
       }, 2000);
@@ -484,7 +493,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const startGame = () => {
-    if (mode === 'normal') {
+    if (selectedMode === 'normal') {
       showCountdown(0);
     } else {
       engineRef.current?.startGame();
@@ -497,17 +506,81 @@ export default function GameBoard({ mode }: GameBoardProps) {
     }
   };
 
-  // Auto-start game on mount (skip redundant home screen)
-  useEffect(() => {
-    startGame();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const goHome = () => {
     cleanup();
     engineRef.current?.resetGame();
-    router.push('/');
+    setScreen('home');
   };
+
+  const renderHomeScreen = () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+      {/* Sound toggle button */}
+      <button
+        className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded-full text-sm transition-colors z-20"
+        onClick={() => {
+          const newState = !gameState.soundEnabled;
+          engineRef.current?.toggleSound(newState);
+        }}
+      >
+        {gameState.soundEnabled ? '🔊 Sonido: ON' : '🔇 Sonido: OFF'}
+      </button>
+
+      {/* Logo/Title */}
+      <h1 className="text-5xl md:text-6xl font-bold text-[#00D4FF] mb-4 tracking-tight leading-tight">
+        🎮 Metro<br />Minute
+      </h1>
+
+      {/* Mode selector */}
+      <div className="flex gap-4 mb-4">
+        <button
+          className={`font-bold py-3 px-8 rounded-lg text-lg transition-all ${
+            selectedMode === 'normal'
+              ? 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] text-[#1A1A2E] shadow-lg'
+              : 'bg-white/10 text-white hover:bg-white/20'
+          }`}
+          onClick={() => setSelectedMode('normal')}
+        >
+          🎯 Normal
+        </button>
+        <button
+          className={`font-bold py-3 px-8 rounded-lg text-lg transition-all ${
+            selectedMode === 'classic'
+              ? 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] text-[#1A1A2E] shadow-lg'
+              : 'bg-white/10 text-white hover:bg-white/20'
+          }`}
+          onClick={() => setSelectedMode('classic')}
+        >
+          ⏱️ Classic
+        </button>
+      </div>
+
+      {/* Mode description */}
+      <p className="text-xl text-white/60 mb-8">
+        {selectedMode === 'classic' ? '60 seconds of free play' : '5 challenges: Reach the score goal!'}
+      </p>
+
+      {/* PLAY button */}
+      <button
+        className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-5 px-20 rounded-xl text-2xl shadow-[0_4px_20px_rgba(236,72,153,0.4)] hover:shadow-[0_6px_25px_rgba(236,72,153,0.5)] hover:-translate-y-0.5 transition-all duration-200 mb-8"
+        onClick={startGame}
+      >
+        PLAY
+      </button>
+
+      {/* High Score Display */}
+      <div className="text-xl text-white">
+        High Score: <span className="text-yellow-400 font-bold">{gameState.highScore}</span>
+      </div>
+
+      {/* Leaderboard link */}
+      <button
+        className="mt-8 text-white/40 hover:text-[#00D4FF] transition-colors text-sm"
+        onClick={() => router.push('/leaderboard')}
+      >
+        🏆 View Leaderboard
+      </button>
+    </div>
+  );
 
   const renderGameScreen = () => (
     <div className="relative w-full h-full">
@@ -783,7 +856,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
       <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-[#1A1A2E] via-[#0D0D1A] to-[#0D0D1A] min-h-screen relative overflow-hidden">
         <div className={`relative w-full max-w-[420px] h-[calc(100vh-2rem)] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800 ${
-          mode === 'classic' 
+          selectedMode === 'classic'
             ? 'max-h-[80vh] md:max-h-[700px]'
             : 'max-h-[95vh] md:h-[85vh] md:max-h-[850px]'
         }`}>
@@ -794,7 +867,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
                 <div className="text-center">
                   <div className="text-xs text-gray-500 uppercase tracking-wider">Time</div>
                   <div className={`text-2xl font-bold ${gameState.timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                    {mode === 'normal' && gameState.survivalTime > 0 ? gameState.survivalTime : gameState.timeLeft}
+                    {selectedMode === 'normal' && gameState.survivalTime > 0 ? gameState.survivalTime : gameState.timeLeft}
                   </div>
                 </div>
                 <div className="text-center">
@@ -825,7 +898,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
           )}
 
           {/* Challenge progress bar (Normal mode) */}
-          {mode === 'normal' && (screen === 'game' || screen === 'countdown') && (
+          {selectedMode === 'normal' && (screen === 'game' || screen === 'countdown') && (
             <div className="absolute top-[110px] left-1/2 transform -translate-x-1/2 w-[60%] h-[25px] bg-white/10 rounded-full overflow-hidden border-2 border-white/20 z-5">
               <div
                 className={`h-full transition-all duration-300 ${
@@ -862,6 +935,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
           {/* Content */}
           <div className="absolute inset-0">
+            {screen === 'home' && renderHomeScreen()}
             {(screen === 'game' || screen === 'countdown') && renderGameScreen()}
             {screen === 'result' && renderResultScreen()}
             {screen === 'victory' && renderVictoryScreen()}
