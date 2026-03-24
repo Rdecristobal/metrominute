@@ -203,7 +203,6 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
       if (gameState.combo % 5 === 0 && gameState.multiplier > 1) {
         setComboDisplay(gameState.multiplier);
-        playSound('combo', gameState.soundEnabled);
         vibrate([100, 50, 100]);
       } else if (target.type !== 'decoy') {
         vibrate(50);
