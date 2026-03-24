@@ -23,7 +23,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const screenRef = useRef<string>('countdown');
   const isTransitioningRef = useRef<boolean>(false);
 
-  const [screen, setScreen] = useState<'home' | 'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('countdown');
+  const [screen, setScreen] = useState<'game' | 'result' | 'victory' | 'gameover' | 'countdown'>('countdown');
   const [targets, setTargets] = useState<Array<{ id: string; x: number; y: number; type: 'normal' | 'golden' | 'decoy'; size: number }>>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
@@ -361,7 +361,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
       }, 400);
     }
 
-    if (phaseConfig?.decoys && phaseConfig.decoys > 0) {
+    // NEVER spawn decoys in classic mode
+    if (mode === 'normal' && phaseConfig?.decoys && phaseConfig.decoys > 0) {
       for (let i = 0; i < phaseConfig.decoys; i++) {
         engineRef.current.spawnDecoy(gameArea.offsetWidth, gameArea.offsetHeight);
       }
@@ -451,14 +452,15 @@ export default function GameBoard({ mode }: GameBoardProps) {
       setTimeout(() => {
         moveTargets(gameArea.offsetWidth, gameArea.offsetHeight);
       }, 500);
-      
+
       // Luego el intervalo regular
       movementIntervalRef.current = setInterval(() => {
         moveTargets(gameArea.offsetWidth, gameArea.offsetHeight);
       }, phaseConfig.movementInterval);
     }
 
-    if (phaseConfig?.decoys && phaseConfig.decoys > 0) {
+    // NEVER setup decoys in classic mode
+    if (mode === 'normal' && phaseConfig?.decoys && phaseConfig.decoys > 0) {
       decoyIntervalRef.current = setInterval(() => {
         toggleDecoys();
       }, 2000);
@@ -504,67 +506,8 @@ export default function GameBoard({ mode }: GameBoardProps) {
   const goHome = () => {
     cleanup();
     engineRef.current?.resetGame();
-    setScreen('home');
+    router.push('/');
   };
-
-  const renderHomeScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full p-4">
-      <h1 className="text-5xl font-bold mb-4 text-center bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent animate-pulse">
-        🎮 Metro<br/>Minute
-      </h1>
-      <p className="text-gray-400 mb-8 text-center max-w-xs">
-        Tap the targets to score points before time runs out
-      </p>
-
-      <div className="flex gap-2 mb-4">
-        <button
-          className={`px-4 py-2 rounded-lg font-bold transition-all ${
-            mode === 'normal' 
-              ? 'bg-pink-600 border-2 border-pink-500 shadow-[0_0_20px_rgba(255,20,147,0.8)]' 
-              : 'bg-gray-700 hover:bg-gray-600'
-          }`}
-          onClick={() => router.push('/game?mode=normal')}
-        >
-          🎯 Normal
-        </button>
-        <button
-          className={`px-4 py-2 rounded-lg font-bold transition-all ${
-            mode === 'classic' 
-              ? 'bg-pink-600 border-2 border-pink-500 shadow-[0_0_20px_rgba(255,20,147,0.8)]' 
-              : 'bg-gray-700 hover:bg-gray-600'
-          }`}
-          onClick={() => router.push('/game?mode=classic')}
-        >
-          ⏱️ Classic
-        </button>
-      </div>
-
-      <p className="text-sm text-gray-500 mb-6">
-        {mode === 'normal' ? '5 challenges: Reach the score goal!' : '60 seconds of free play'}
-      </p>
-
-      <button
-        className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold py-3 px-12 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all animate-pulse"
-        onClick={startGame}
-      >
-        PLAY
-      </button>
-
-      <div className="mt-8 text-sm text-gray-500">
-        High Score: {gameState.highScore}
-      </div>
-
-      <button
-        className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded-full text-sm transition-colors"
-        onClick={() => {
-          const newState = !gameState.soundEnabled;
-          engineRef.current?.toggleSound(newState);
-        }}
-      >
-        {gameState.soundEnabled ? '🔊 ON' : '🔇 OFF'}
-      </button>
-    </div>
-  );
 
   const renderGameScreen = () => (
     <div className="relative w-full h-full">
@@ -689,12 +632,12 @@ export default function GameBoard({ mode }: GameBoardProps) {
   );
 
   const renderResultScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full p-4 overflow-y-auto">
+    <div className="flex flex-col items-center justify-center h-full p-4 overflow-y-auto text-center">
       <h2 className="text-4xl font-bold mb-4">⏰ Time!</h2>
       <div className="text-7xl font-bold text-cyan-400 mb-4">{resultStats.score}</div>
 
       <p className="text-xl mb-6 text-center">
-        {resultStats.isNewRecord 
+        {resultStats.isNewRecord
           ? '🎉 ¡NUEVO RÉCORD PERSONAL! 🎉'
           : resultStats.delta === 0
             ? '¡Igualaste tu récord!'
@@ -708,13 +651,13 @@ export default function GameBoard({ mode }: GameBoardProps) {
           <span className="text-2xl font-bold text-yellow-400">{gameState.highScore}</span>
         </div>
         <div className={`text-center font-bold p-2 rounded ${
-          resultStats.isNewRecord 
-            ? 'bg-green-500/20 text-green-400' 
+          resultStats.isNewRecord
+            ? 'bg-green-500/20 text-green-400'
             : resultStats.delta === 0
               ? 'bg-gray-500/20 text-gray-300'
               : 'bg-red-500/20 text-red-400'
         }`}>
-          {resultStats.isNewRecord 
+          {resultStats.isNewRecord
             ? `🎉 +${resultStats.delta} pts (NUEVO RÉCORD)`
             : resultStats.delta === 0
               ? '⚪ Igualaste tu récord'
@@ -764,7 +707,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
     const avgMaxCombo = (gameState.maxComboSum / CHALLENGES.length).toFixed(1);
 
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
+      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
         <h1 className="text-5xl font-bold mb-2 text-yellow-400">🏆 ¡VICTORIA!</h1>
         <p className="text-lg text-yellow-400 mb-4">You completed all 5 challenges</p>
         <div className="text-5xl font-bold text-yellow-400 mb-8">¡COMPLETADO!</div>
@@ -798,7 +741,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
   };
 
   const renderGameOverScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full p-4">
+    <div className="flex flex-col items-center justify-center h-full p-4 text-center">
       <h1 className="text-7xl font-black text-red-500 mb-4 animate-pulse" style={{ textShadow: '0 0 30px rgba(244, 67, 54, 0.8)' }}>
         GAME OVER
       </h1>
@@ -807,7 +750,7 @@ export default function GameBoard({ mode }: GameBoardProps) {
         Score: {gameState.score} / {gameState.currentChallengeScoreRequired}
       </p>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 justify-center w-full">
         <button
           className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
           onClick={startGame}
@@ -839,7 +782,11 @@ export default function GameBoard({ mode }: GameBoardProps) {
       `}</style>
 
       <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-[#1A1A2E] via-[#0D0D1A] to-[#0D0D1A] min-h-screen relative overflow-hidden">
-        <div className="relative w-full max-w-[420px] h-[85vh] max-h-[850px] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800">
+        <div className={`relative w-full max-w-[420px] h-[calc(100vh-2rem)] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800 ${
+          mode === 'classic' 
+            ? 'max-h-[80vh] md:max-h-[700px]'
+            : 'max-h-[95vh] md:h-[85vh] md:max-h-[850px]'
+        }`}>
           {/* Header */}
           {(screen === 'game' || screen === 'countdown') && (
             <div className="absolute top-0 left-0 right-0 p-5 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
@@ -859,9 +806,20 @@ export default function GameBoard({ mode }: GameBoardProps) {
                   <div className="text-2xl font-bold text-yellow-400">x{gameState.multiplier}</div>
                 </div>
               </div>
-              <div className="text-center">
-                <div className="text-xs text-gray-500 uppercase tracking-wider">High Score</div>
-                <div className="text-2xl font-bold text-white">{gameState.highScore}</div>
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">High Score</div>
+                  <div className="text-2xl font-bold text-white">{gameState.highScore}</div>
+                </div>
+                <button
+                  className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded-full text-sm transition-colors"
+                  onClick={() => {
+                    const newState = !gameState.soundEnabled;
+                    engineRef.current?.toggleSound(newState);
+                  }}
+                >
+                  {gameState.soundEnabled ? '🔊' : '🔇'}
+                </button>
               </div>
             </div>
           )}
@@ -904,7 +862,6 @@ export default function GameBoard({ mode }: GameBoardProps) {
 
           {/* Content */}
           <div className="absolute inset-0">
-            {screen === 'home' && renderHomeScreen()}
             {(screen === 'game' || screen === 'countdown') && renderGameScreen()}
             {screen === 'result' && renderResultScreen()}
             {screen === 'victory' && renderVictoryScreen()}

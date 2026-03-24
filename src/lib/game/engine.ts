@@ -1,5 +1,5 @@
 // Game engine logic
-import { GameState, GameMode, Phase, Challenge, Target, Particle, FloatingScore, Ripple } from './types';
+import { GameState, GameMode, Phase, Challenge, Target } from './types';
 
 export const PHASES: Phase[] = [
   { name: 'Warm Up', startTime: 60, endTime: 50, targetMovement: false, decoys: 0 },
@@ -167,6 +167,9 @@ export class GameEngine {
 
   spawnDecoy(gameWidth: number, gameHeight: number): Target | null {
     if (!this.state.isPlaying || this.state.isGameOver) return null;
+
+    // NEVER spawn decoys in classic mode
+    if (this.state.mode === 'classic') return null;
 
     const maxX = gameWidth - TARGET_SIZE;
     const maxY = gameHeight - TARGET_SIZE;
