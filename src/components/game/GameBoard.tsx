@@ -240,7 +240,6 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   }, [gameState.soundEnabled, gameState.combo, gameState.multiplier, selectedMode]);
 
   const handleChallengeComplete = (nextChallenge: number) => {
-    playSound('challenge-success', gameState.soundEnabled);
     setTimeout(() => {
       if (nextChallenge < CHALLENGES.length) {
         showCountdown(nextChallenge);
@@ -251,12 +250,10 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   };
 
   const handleVictory = () => {
-    playSound('newrecord', gameState.soundEnabled);
     setScreen('victory');
   };
 
   const handleGameOver = () => {
-    playSound('gameover', gameState.soundEnabled);
     setScreen('gameover');
   };
 
@@ -275,7 +272,8 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
       delta: gameState.score - (isNewRecord ? 0 : gameState.highScore)
     });
 
-    playSound('gameover', gameState.soundEnabled);
+    setScreen('result');
+  };
     setScreen('result');
   };
 
