@@ -119,9 +119,9 @@ export function playSound(soundType: SoundType, enabled: boolean = true): void {
       playCoinCollect();
       break;
     case 'combo':
-      playTone(600, 50, 'square', 0.25);
-      setTimeout(() => playTone(800, 50, 'square', 0.25), 50);
-      setTimeout(() => playTone(1000, 100, 'square', 0.25), 100);
+      // Soft combo sound - less aggressive than square waves
+      playTone(400, 80, 'sine', 0.15);
+      setTimeout(() => playTone(500, 80, 'sine', 0.15), 80);
       break;
     case 'gameover':
       playTone(400, 200, 'sawtooth', 0.3);
