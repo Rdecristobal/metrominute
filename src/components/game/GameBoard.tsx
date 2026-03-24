@@ -314,10 +314,8 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
       setCountdown(prev => {
         if (prev === null) return null;
         if (prev > 1) {
-          playSound('hit', gameState.soundEnabled);
           return prev - 1;
         } else if (prev === 1) {
-          playSound('golden', gameState.soundEnabled);
           return 0;
         } else {
           clearInterval(countdownIntervalRef.current!);
