@@ -10,7 +10,7 @@ export function Footer({ className }: FooterProps) {
       <div className="container mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-retro-muted">
           <p className="font-terminal">
-            © 2026 Metro Minute. Built with ❤️ and pixels.
+            © 2026 Metro Minute. Built with ❤️ by DYZINK.
           </p>
 
           <div className="flex items-center gap-6">
