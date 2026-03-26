@@ -50,11 +50,35 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+
+        // Retro colors
+        'retro-black': '#000000',
+        'retro-dark': '#0a0a0a',
+        'retro-surface': '#1a1a1a',
+        'retro-text': '#e0e0e0',
+        'retro-muted': '#888888',
+
+        'neon-cyan': '#00fff7',
+        'neon-magenta': '#ff00ff',
+        'neon-yellow': '#ffff00',
+        'neon-green': '#39ff14',
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) * 0.6)",
         sm: "calc(var(--radius) * 0.4)",
+      },
+      fontFamily: {
+        'arcade': ['"Press Start 2P"', 'cursive'],
+        'terminal': ['VT323', 'monospace'],
+      },
+      boxShadow: {
+        'neon-cyan': '0 0 5px #00fff7, 0 0 10px #00fff7, 0 0 20px #00fff7',
+        'neon-magenta': '0 0 5px #ff00ff, 0 0 10px #ff00ff, 0 0 20px #ff00ff',
+        'neon-green': '0 0 5px #39ff14, 0 0 10px #39ff14, 0 0 20px #39ff14',
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
       },
     },
   },

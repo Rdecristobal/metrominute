@@ -274,8 +274,6 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
     setScreen('result');
   };
-    setScreen('result');
-  };
 
   const showCountdown = (challengeIndex: number) => {
     // Limpiar intervalo del countdown anterior primero

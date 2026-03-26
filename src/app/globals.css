@@ -61,3 +61,75 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================
+   METRO MINUTE - RETRO THEME
+   ============================================ */
+
+/* Variables Retro */
+:root {
+  --retro-black: #000000;
+  --retro-dark: #0a0a0a;
+  --retro-surface: #1a1a1a;
+  --retro-text: #e0e0e0;
+  --retro-muted: #888888;
+  
+  --neon-cyan: #00fff7;
+  --neon-magenta: #ff00ff;
+  --neon-yellow: #ffff00;
+  --neon-green: #39ff14;
+}
+
+/* Clases de utilidad retro */
+.bg-retro-dark { background-color: var(--retro-dark); }
+.bg-retro-surface { background-color: var(--retro-surface); }
+.text-retro-text { color: var(--retro-text); }
+.text-retro-muted { color: var(--retro-muted); }
+
+/* Efecto neón glow */
+.shadow-neon {
+  box-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
+
+.text-glow-cyan {
+  text-shadow: 
+    0 0 5px var(--neon-cyan),
+    0 0 10px var(--neon-cyan);
+}
+
+/* Borde pixelado */
+.pixel-border {
+  border: 4px solid;
+  box-shadow: 
+    inset -4px -4px 0 0 rgba(0,0,0,0.3),
+    inset 4px 4px 0 0 rgba(255,255,255,0.1);
+}
+
+/* Animación de entrada */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
