@@ -145,6 +145,11 @@ export class GameEngine {
   spawnTarget(gameWidth: number, gameHeight: number, isGolden: boolean = false): Target | null {
     if (!this.state.isPlaying || this.state.isGameOver) return null;
 
+    if (gameWidth < TARGET_SIZE * 2 || gameHeight < HEADER_HEIGHT + TARGET_SIZE) {
+      console.warn('Game area too small for spawn:', gameWidth, gameHeight);
+      return null;
+    }
+
     const maxX = gameWidth - TARGET_SIZE;
     const maxY = gameHeight - TARGET_SIZE;
 
@@ -167,6 +172,11 @@ export class GameEngine {
 
   spawnDecoy(gameWidth: number, gameHeight: number): Target | null {
     if (!this.state.isPlaying || this.state.isGameOver) return null;
+
+    if (gameWidth < TARGET_SIZE * 2 || gameHeight < HEADER_HEIGHT + TARGET_SIZE) {
+      console.warn('Game area too small for spawn:', gameWidth, gameHeight);
+      return null;
+    }
 
     const maxX = gameWidth - TARGET_SIZE;
     const maxY = gameHeight - TARGET_SIZE;
