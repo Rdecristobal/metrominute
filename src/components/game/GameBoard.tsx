@@ -339,14 +339,21 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
     engineRef.current.startChallenge(challengeIndex);
     setScreen('game');
-
-    // Pequeño delay para que el DOM se actualice
-    setTimeout(() => {
-      startGameLoop();
-      setupMovementAndDecoys();
-      spawnInitialTargets();
-    }, 50);
+    // El spawn de targets ahora se maneja en useEffect cuando screen='game'
   };
+
+  // Manejar el inicio del juego en modo Normal cuando screen cambia a 'game'
+  useEffect(() => {
+    if (screen === 'game' && selectedMode === 'normal' && engineRef.current?.getState().isPlaying) {
+      // Usar requestAnimationFrame para asegurar que el layout está completo
+      requestAnimationFrame(() => {
+        startGameLoop();
+        setupMovementAndDecoys();
+        spawnInitialTargets();
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, selectedMode]);
 
   const spawnInitialTargets = () => {
     if (!engineRef.current || !gameAreaRef.current) return;
@@ -491,13 +498,22 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
     } else {
       engineRef.current?.startGame();
       setScreen('game');
-      setTimeout(() => {
+      // El spawn de targets ahora se maneja en useEffect cuando screen='game'
+    }
+  };
+
+  // Manejar el inicio del juego en modo Classic cuando screen cambia a 'game'
+  useEffect(() => {
+    if (screen === 'game' && selectedMode === 'classic' && engineRef.current?.getState().isPlaying) {
+      // Usar requestAnimationFrame para asegurar que el layout está completo
+      requestAnimationFrame(() => {
         startGameLoop();
         setupMovementAndDecoys();
         spawnInitialTargets();
-      }, 100);
+      });
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, selectedMode]);
 
   const goHome = () => {
     cleanup();
