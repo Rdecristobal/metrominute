@@ -339,21 +339,27 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
     engineRef.current.startChallenge(challengeIndex);
     setScreen('game');
-    // El spawn de targets ahora se maneja en useEffect cuando screen='game'
   };
 
-  // Manejar el inicio del juego en modo Normal cuando screen cambia a 'game'
+  // Spawn targets + start game loop cuando la pantalla cambia a 'game'
+  // Unificado para classic y normal — requestAnimationFrame + fallback setTimeout
   useEffect(() => {
-    if (screen === 'game' && selectedMode === 'normal' && engineRef.current?.getState().isPlaying) {
-      // Usar requestAnimationFrame para asegurar que el layout está completo
+    if (screen !== 'game' || !engineRef.current?.getState().isPlaying) return;
+
+    const spawn = () => {
+      startGameLoop();
+      setupMovementAndDecoys();
+      spawnInitialTargets();
+    };
+
+    // Double rAF ensures layout is fully computed after screen='game' render
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        startGameLoop();
-        setupMovementAndDecoys();
-        spawnInitialTargets();
+        spawn();
       });
-    }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, selectedMode]);
+  }, [screen]);
 
   const spawnInitialTargets = () => {
     if (!engineRef.current || !gameAreaRef.current) return;
@@ -498,22 +504,8 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
     } else {
       engineRef.current?.startGame();
       setScreen('game');
-      // El spawn de targets ahora se maneja en useEffect cuando screen='game'
     }
   };
-
-  // Manejar el inicio del juego en modo Classic cuando screen cambia a 'game'
-  useEffect(() => {
-    if (screen === 'game' && selectedMode === 'classic' && engineRef.current?.getState().isPlaying) {
-      // Usar requestAnimationFrame para asegurar que el layout está completo
-      requestAnimationFrame(() => {
-        startGameLoop();
-        setupMovementAndDecoys();
-        spawnInitialTargets();
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, selectedMode]);
 
   const goHome = () => {
     cleanup();
