@@ -254,6 +254,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   };
 
   const handleGameOver = () => {
+    isTransitioningRef.current = false;
     setScreen('gameover');
   };
 
@@ -499,6 +500,8 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   };
 
   const startGame = () => {
+    isTransitioningRef.current = false;
+    prevPhaseRef.current = 0;
     if (selectedMode === 'normal') {
       showCountdown(0);
     } else {
@@ -508,6 +511,8 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   };
 
   const goHome = () => {
+    isTransitioningRef.current = false;
+    prevPhaseRef.current = 0;
     cleanup();
     engineRef.current?.resetGame();
     setScreen('home');
