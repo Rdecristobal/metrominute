@@ -533,7 +533,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
       {/* Logo/Title */}
       <h1 className="text-5xl md:text-6xl font-bold text-[#00D4FF] mb-4 tracking-tight leading-tight">
-        🎮 Metro<br />Minute
+        🫧 Bubbles
       </h1>
 
       {/* Mode selector */}
