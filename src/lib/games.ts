@@ -3,7 +3,7 @@ import { Game } from '@/types/game';
 export const GAMES: Game[] = [
   {
     id: 'bubble',
-    title: 'Bubble',
+    title: 'Bubbles',
     icon: '🎯',
     description: 'Test your reflexes! Click the targets before time runs out.',
     href: '/bubble',
