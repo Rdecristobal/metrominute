@@ -126,8 +126,9 @@ export class FootballEngine {
   playerStop(): void {
     if (!this.state.stopwatchRunning) return;
 
+    // Compute exact value at stop time using timestamps
+    this.state.stopwatchValue = this.computeExactStopwatchValue();
     this.stopStopwatch();
-    // Round to 2 decimals to avoid floating point issues
     const value = Math.round(this.state.stopwatchValue * 100) / 100;
     this.state.stopwatchValue = value;
     const scoring = calculateScore(value);
@@ -194,8 +195,9 @@ export class FootballEngine {
   foulRetryStop(): void {
     if (!this.state.stopwatchRunning) return;
 
+    // Compute exact value at stop time
+    this.state.stopwatchValue = this.computeExactStopwatchValue();
     this.stopStopwatch();
-    // Round to 2 decimals to avoid floating point issues
     const value = Math.round(this.state.stopwatchValue * 100) / 100;
     this.state.stopwatchValue = value;
     const isGoal = isFoulGoal(value);
@@ -356,6 +358,16 @@ export class FootballEngine {
   // ========== STOPWATCH ==========
   private stopwatchStartTime: number = 0;
   private stopwatchStartValue: number = 0;
+
+  /**
+   * Compute the exact stopwatch value at this instant using timestamps.
+   * Avoids stale values from the interval-based notify.
+   */
+  private computeExactStopwatchValue(): number {
+    const elapsed = (Date.now() - this.stopwatchStartTime) / 10; // centiseconds
+    const rawValue = (this.stopwatchStartValue + elapsed / 100) % 100;
+    return Math.round(rawValue * 100) / 100;
+  }
 
   private runStopwatch(): void {
     if (this.stopwatchInterval) clearInterval(this.stopwatchInterval);

@@ -120,14 +120,14 @@ export default function FootballGame() {
       if (!gameState.stopwatchRunning) {
         engineRef.current.playerStart();
       } else {
-        // Round to 2 decimals
-        const value = Math.round(gameState.stopwatchValue * 100) / 100;
+        const prevScore = engineRef.current.getState().player1Score;
         engineRef.current.foulRetryStop();
-        const lastDigit = Math.floor(value) % 10;
-        if (lastDigit === 5) {
-          showOutcome('goal', value);
+        const newState = engineRef.current.getState();
+        // Check if score changed = goal
+        if (newState.player1Score > prevScore) {
+          showOutcome('goal', newState.stopwatchValue);
         } else {
-          showOutcome('turnover', value);
+          showOutcome('turnover', newState.stopwatchValue);
         }
         setIsFoulRetry(false);
       }
@@ -138,24 +138,28 @@ export default function FootballGame() {
       // START — begin stopwatch
       engineRef.current.playerStart();
     } else {
-      // STOP — evaluate
-      // Round to 2 decimals
+      // STOP — let the engine decide the outcome, then show it
       const value = Math.round(gameState.stopwatchValue * 100) / 100;
-      const wholeValue = Math.floor(value);
-
-      if (value === 0) {
-        showOutcome('goal', value);
-        engineRef.current.playerStop();
-      } else if (value <= 0.01 || value >= 99.99) {
+      engineRef.current.playerStop();
+      // Read the outcome from the engine state after stop
+      const newState = engineRef.current.getState();
+      // Determine what happened based on score changes and screen
+      if (newState.screen === GameScreen.PENALTY_RESULT) {
         showOutcome('penalty', value);
-        engineRef.current.playerStop();
-      } else if (wholeValue > 0 && wholeValue % 5 === 0 && (value - wholeValue) < 0.02) {
+        return;
+      }
+      // Check if it was a foul (foul retry flag would have been set by engine? No — we set it here)
+      // Use scoring.ts to determine what the engine saw
+      const hundredths = Math.round((value - Math.floor(value)) * 100);
+      if (hundredths === 0) {
+        showOutcome('goal', value);
+      } else if (hundredths === 1 || hundredths === 99) {
+        showOutcome('penalty', value);
+      } else if (hundredths === 95) {
         showOutcome('foul', value);
-        engineRef.current.playerStop();
         setIsFoulRetry(true);
       } else {
         showOutcome('turnover', value);
-        engineRef.current.playerStop();
       }
     }
   }, [gameState.stopwatchRunning, gameState.stopwatchValue, isFoulRetry, showOutcome]);

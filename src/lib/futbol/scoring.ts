@@ -15,44 +15,41 @@ function roundTo2Decimals(value: number): number {
  * @returns ScoringResult
  *
  * REGLAS (definidas por Raúl):
- * - 00.00 = GOL directo
- * - 00.01 / 99.99 = PENALTY (rival lanza y dice par/impar ANTES de parar)
- * - Múltiplo de 5 (05, 10, 15, 20, 25...) = FALTA (reintento del jugador actual)
- * - Todo lo demás = TURNO pasa al rival
- *
- * IMPORTANTE:
- * - NO hay puntos numéricos. Es fútbol real: o es gol o no es gol.
- * - FALTA: el jugador actual vuelve a lanzar, si para en X5 → gol, sino → pierde turno
+ * - Cualquier valor que termine en .00 = GOL (00.00, 01.00, 47.00, 99.00...)
+ * - Cualquier valor que termine en .01 o .99 = PENALTY (00.01, 47.01, 00.99, 47.99...)
+ * - Cualquier valor que termine en .95 = FALTA (00.95, 47.95, 99.95...)
+ * - Todo lo demás = TURNOVER
  */
 export function calculateScore(value: number): ScoringResult {
   const rounded = roundTo2Decimals(value);
+  // Get the hundredths (last 2 decimal digits)
+  const hundredths = Math.round((rounded - Math.floor(rounded)) * 100);
 
-  // GOL: 00.00
-  if (rounded === 0) {
+  // GOL: cualquier .00
+  if (hundredths === 0) {
     return {
       outcome: 'goal',
       description: '⚽ GOL!'
     };
   }
 
-  // PENALTY: 00.01 o 99.99
-  if (rounded === 0.01 || rounded === 99.99) {
+  // PENALTY: cualquier .01 o .99
+  if (hundredths === 1 || hundredths === 99) {
     return {
       outcome: 'penalty',
       description: '🥅 PENALTY! Rival lanza y dice par/impar'
     };
   }
 
-  // FALTA: Múltiplo de 5 (05, 10, 15, 20, 25...)
-  const wholeValue = Math.floor(rounded);
-  if (wholeValue > 0 && wholeValue % 5 === 0 && (rounded - wholeValue) < 0.02) {
+  // FALTA: cualquier .95
+  if (hundredths === 95) {
     return {
       outcome: 'foul',
-      description: '⚠️ FALTA! Reintento — para en X5 = gol'
+      description: '⚠️ FALTA! Reintento — para en .00 = gol'
     };
   }
 
-  // TURNO AL RIVAL: Todo lo demás
+  // TURNOVER: todo lo demás
   return {
     outcome: 'turnover',
     description: '🔄 Turno al rival'
@@ -72,11 +69,12 @@ export function getParity(value: number): 'even' | 'odd' {
 
 /**
  * Determina si una parada en FALTA resulta en gol
+ * En la regla actual: .00 = gol (igual que calculateScore)
  * @param value - Valor del cronómetro al parar
- * @returns true si acaba en 5 (05, 15, 25...), false en otro caso
+ * @returns true si acaba en .00
  */
 export function isFoulGoal(value: number): boolean {
   const rounded = roundTo2Decimals(value);
-  const lastDigit = Math.floor(rounded) % 10;
-  return lastDigit === 5;
+  const hundredths = Math.round((rounded - Math.floor(rounded)) * 100);
+  return hundredths === 0;
 }
