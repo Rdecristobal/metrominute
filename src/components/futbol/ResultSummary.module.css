@@ -1,149 +1,141 @@
 .resultSummary {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px;
-  width: 100%;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.newRecordBadge {
+  background: linear-gradient(135deg, #00FF7F 0%, #00CC66 100%);
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
 }
 
 .winnerText {
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: bold;
-  margin-bottom: 20px;
   text-align: center;
-  animation: bounce 0.5s ease;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-family: 'Courier New', monospace;
 }
 
 .winnerText.victory {
-  color: #10B981;
-  text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+  color: #00FF7F;
 }
 
 .winnerText.defeat {
-  color: #EF4444;
-  text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+  color: #FF4444;
 }
 
 .winnerText.draw {
-  color: #F59E0B;
-  text-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
-}
-
-@keyframes bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  color: #888;
 }
 
 .scoreDisplay {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 20px;
-  margin-bottom: 30px;
+  margin: 20px 0;
 }
 
 .scoreItem {
+  flex: 1;
   text-align: center;
 }
 
 .scoreValue {
   font-size: 4rem;
   font-weight: bold;
-  color: #FFFFFF;
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+  color: #FFF;
+  font-family: 'Courier New', monospace;
 }
 
 .scoreDivider {
-  font-size: 2rem;
-  color: #6B7280;
+  font-size: 3rem;
   font-weight: bold;
-}
-
-.newRecordBadge {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(16, 185, 129, 0); }
+  color: #666;
+  font-family: 'Courier New', monospace;
 }
 
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  width: 100%;
-  max-width: 400px;
-  margin-bottom: 30px;
+  gap: 12px;
 }
 
 .statItem {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 20px;
-  border-radius: 12px;
+  background: #111;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #222;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .statLabel {
-  font-size: 0.8rem;
-  color: #9CA3AF;
+  font-size: 0.65rem;
+  color: #666;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
+  font-family: 'Courier New', monospace;
 }
 
 .statValue {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #FFFFFF;
+  color: #FFF;
+  font-family: 'Courier New', monospace;
 }
 
 .buttonGroup {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 400px;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .button {
-  padding: 15px 30px;
-  border-radius: 12px;
+  width: 100%;
+  padding: 18px;
+  border-radius: 10px;
   font-size: 1.1rem;
   font-weight: bold;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
 }
 
 .buttonPrimary {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  color: white;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  background: #FFF;
+  color: #000;
 }
 
 .buttonPrimary:hover {
+  background: #E0E0E0;
   transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
 }
 
 .buttonSecondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: #111;
+  color: #FFF;
+  border: 2px solid #333;
 }
 
 .buttonSecondary:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #1A1A1A;
+  border-color: #444;
+  color: #FFF;
+  transform: translateY(-2px);
 }

@@ -13,10 +13,9 @@ import {
 import { loadSoundEnabled } from '@/lib/futbol/engine';
 import Stopwatch from './Stopwatch';
 import ScoreBoard from './ScoreBoard';
-import PlayerCard from './PlayerCard';
-import ResultSummary from './ResultSummary';
 import DifficultySelector from './DifficultySelector';
 import PenaltyControl from './PenaltyControl';
+import ResultSummary from './ResultSummary';
 import styles from './FootballGame.module.css';
 
 export default function FootballGame() {
@@ -57,8 +56,10 @@ export default function FootballGame() {
   const [selectedMode, setSelectedMode] = useState<GameMode>(GameMode.VS_AI);
   const [selectedDuration, setSelectedDuration] = useState<MatchDuration>(120);
   const [selectedDifficulty, setSelectedDifficulty] = useState<AIDifficulty>(AIDifficulty.MEDIUM);
-  const [lastOutcome, setLastOutcome] = useState<{ type: string; description: string } | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [showGoalCelebration, setShowGoalCelebration] = useState(false);
+  const [lastOutcome, setLastOutcome] = useState<{ type: 'goal' | 'penalty' | 'foul' | 'turnover'; description: string } | null>(null);
+  const [stopwatchStarted, setStopwatchStarted] = useState(false);
 
   useEffect(() => {
     engineRef.current = new FootballEngine(
@@ -99,11 +100,6 @@ export default function FootballGame() {
         aiDifficulty: state.aiDifficulty,
         soundEnabled: state.soundEnabled
       });
-
-      // Si estamos en modo vs AI, sincronizar currentTurn con el estado
-      if (state.mode === GameMode.VS_AI && state.currentTurn !== 'ai') {
-        // El jugador actual es siempre player1 en modo vs AI
-      }
     });
 
     return () => {
@@ -111,6 +107,13 @@ export default function FootballGame() {
       engineRef.current?.resetGame();
     };
   }, [selectedMode, selectedDuration, selectedDifficulty]);
+
+  // Reset stopwatchStarted when turn changes or when outcome is cleared
+  useEffect(() => {
+    if (!lastOutcome) {
+      setStopwatchStarted(false);
+    }
+  }, [gameState.currentTurn, lastOutcome]);
 
   const handleStartMatch = useCallback(() => {
     engineRef.current?.setMode(selectedMode);
@@ -141,22 +144,33 @@ export default function FootballGame() {
   const handleStop = useCallback((value: number) => {
     if (!engineRef.current) return;
 
+    // If stopwatch hasn't started yet, this is a START action
+    // Reset the visual value to 0 for the player
+    if (!stopwatchStarted && !lastOutcome) {
+      setStopwatchStarted(true);
+      return;
+    }
+
+    // If stopwatch has started, this is a STOP action
     const currentPlayer = gameState.mode === GameMode.VS_AI ? 'player1' : gameState.currentTurn;
     engineRef.current.triggerStop(currentPlayer);
+    setStopwatchStarted(false); // Reset for next turn
 
-    // Determinar outcome para mostrar en la UI
+    // Determine outcome for UI feedback based on actual value
     if (value === 0) {
-      setLastOutcome({ type: 'goal', description: '⚽ GOL!' });
+      setLastOutcome({ type: 'goal', description: 'GOAL! ⚽' });
+      setShowGoalCelebration(true);
+      setTimeout(() => setShowGoalCelebration(false), 1500);
     } else if (value === 0.01 || value === 99.99) {
-      setLastOutcome({ type: 'penalty', description: '🥅 PENALTY!' });
+      setLastOutcome({ type: 'penalty', description: 'PENALTY!' });
     } else if (Math.floor(value) > 0 && Math.floor(value) % 5 === 0) {
-      setLastOutcome({ type: 'foul', description: '⚠️ FALTA!' });
+      setLastOutcome({ type: 'foul', description: 'FOUL!' });
     } else {
-      setLastOutcome({ type: 'turnover', description: '🔄 Turno al rival' });
+      setLastOutcome({ type: 'turnover', description: 'TURNOVER' });
     }
 
     setTimeout(() => setLastOutcome(null), 2000);
-  }, [gameState.mode, gameState.currentTurn]);
+  }, [gameState.mode, gameState.currentTurn, stopwatchStarted, lastOutcome]);
 
   const handlePenaltyStop = useCallback((value: number, prediction: 'even' | 'odd') => {
     const rivalPlayer = (gameState.mode === GameMode.VS_AI ? 'player2' : (gameState.currentTurn === 'player1' ? 'player2' : 'player1')) as 'player1' | 'player2';
@@ -185,9 +199,9 @@ export default function FootballGame() {
     <div className={styles.gameContainer}>
       <div className={styles.gameWrapper}>
         <div className={styles.gameHeader}>
-          <div className={styles.gameTitle}>⚽ Fútbol Cronómetro</div>
+          <div className={styles.gameTitle}>FOOTBALL ZERO</div>
           <button className={styles.backButton} onClick={() => router.push('/')}>
-            Volver
+            BACK
           </button>
         </div>
 
@@ -203,9 +217,9 @@ export default function FootballGame() {
               >
                 <div className={styles.logo}>⚽</div>
 
-                <div className={styles.title}>Fútbol Cronómetro</div>
+                <div className={styles.title}>FOOTBALL ZERO</div>
                 <div className={styles.subtitle}>
-                  Para en 00.00 = GOL. Precisión y tiempo lo es todo.
+                  Stop at 00.00 = GOAL. Precision is everything.
                 </div>
 
                 <div className={styles.modeSelector}>
@@ -213,16 +227,16 @@ export default function FootballGame() {
                     className={`${styles.modeButton} ${styles.vsAi} ${selectedMode === GameMode.VS_AI ? styles.selected : ''}`}
                     onClick={() => setSelectedMode(GameMode.VS_AI)}
                   >
-                    <span>🤖 VS IA</span>
-                    <span className={styles.subtitle}>Juega contra la IA</span>
+                    <span>🤖 VS AI</span>
+                    <span className={styles.subtitle}>Play against AI</span>
                   </button>
 
                   <button
                     className={`${styles.modeButton} ${styles.vsPlayer} ${selectedMode === GameMode.VS_PLAYER ? styles.selected : ''}`}
                     onClick={() => setSelectedMode(GameMode.VS_PLAYER)}
                   >
-                    <span>👥 VS JUGADOR</span>
-                    <span className={styles.subtitle}>Mismo dispositivo</span>
+                    <span>👥 VS PLAYER</span>
+                    <span className={styles.subtitle}>Same device</span>
                   </button>
                 </div>
 
@@ -255,7 +269,7 @@ export default function FootballGame() {
                 </div>
 
                 <button className={styles.playButton} onClick={handleStartMatch}>
-                  ⚽ JUGAR
+                  PLAY
                 </button>
               </motion.div>
             )}
@@ -295,37 +309,37 @@ export default function FootballGame() {
                   player2Fouls={gameState.player2Fouls}
                   matchTime={gameState.matchTime}
                   isExtraTime={gameState.isExtraTime}
-                  player1Name={gameState.mode === GameMode.VS_AI ? 'JUGADOR' : 'JUGADOR 1'}
-                  player2Name={gameState.mode === GameMode.VS_AI ? 'IA' : 'JUGADOR 2'}
+                  player1Name={gameState.mode === GameMode.VS_AI ? 'PLAYER' : 'PLAYER 1'}
+                  player2Name={gameState.mode === GameMode.VS_AI ? 'AI' : 'PLAYER 2'}
                 />
 
                 <Stopwatch
                   value={gameState.stopwatchValue}
                   isRunning={gameState.stopwatchRunning}
                   onStop={handleStop}
-                  disabled={!gameState.isPlaying || gameState.isPaused || gameState.mode === GameMode.VS_AI}
-                  playerId={gameState.mode === GameMode.VS_AI ? 'JUGADOR' : `JUGADOR ${gameState.currentTurn === 'player1' ? '1' : '2'}`}
+                  disabled={!gameState.isPlaying || gameState.isPaused || (gameState.mode === GameMode.VS_AI && gameState.currentTurn === 'ai')}
+                  playerId={gameState.mode === GameMode.VS_AI ? 'PLAYER' : `PLAYER ${gameState.currentTurn === 'player1' ? '1' : '2'}`}
                   outcome={lastOutcome?.description}
-                  outcomeType={lastOutcome?.type as 'goal' | 'penalty' | 'foul' | 'turnover'}
+                  outcomeType={lastOutcome?.type}
+                  isPlayerTurn={gameState.mode === GameMode.VS_AI ? gameState.currentTurn !== 'ai' : true}
+                  stopwatchStarted={stopwatchStarted}
                 />
 
                 {gameState.mode === GameMode.VS_PLAYER && (
-                  <div className={styles.homeScreen}>
-                    <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
-                      <PlayerCard
-                        playerId="player1"
-                        score={gameState.player1Score}
-                        fouls={gameState.player1Fouls}
-                        attempts={gameState.player1Attempts}
-                        isActive={gameState.currentTurn === 'player1'}
-                      />
-                      <PlayerCard
-                        playerId="player2"
-                        score={gameState.player2Score}
-                        fouls={gameState.player2Fouls}
-                        attempts={gameState.player2Attempts}
-                        isActive={gameState.currentTurn === 'player2'}
-                      />
+                  <div style={{ display: 'flex', gap: '20px', width: '100%', marginTop: '20px' }}>
+                    <div style={{ flex: 1, padding: '15px', background: '#1A1A1A', borderRadius: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#666', marginBottom: '5px', fontFamily: 'Courier New, monospace', textTransform: 'uppercase' }}>PLAYER 1</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFF', fontFamily: 'Courier New, monospace' }}>{gameState.player1Score}</div>
+                      <div style={{ fontSize: '0.7rem', color: gameState.currentTurn === 'player1' ? '#00FF7F' : '#666', marginTop: '5px', fontFamily: 'Courier New, monospace' }}>
+                        {gameState.currentTurn === 'player1' ? 'TURN' : 'WAIT'}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, padding: '15px', background: '#1A1A1A', borderRadius: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#666', marginBottom: '5px', fontFamily: 'Courier New, monospace', textTransform: 'uppercase' }}>PLAYER 2</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFF', fontFamily: 'Courier New, monospace' }}>{gameState.player2Score}</div>
+                      <div style={{ fontSize: '0.7rem', color: gameState.currentTurn === 'player2' ? '#00FF7F' : '#666', marginTop: '5px', fontFamily: 'Courier New, monospace' }}>
+                        {gameState.currentTurn === 'player2' ? 'TURN' : 'WAIT'}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -341,7 +355,7 @@ export default function FootballGame() {
               >
                 <PenaltyControl
                   rivalPlayerId={(gameState.mode === GameMode.VS_AI ? 'player2' : (gameState.currentTurn === 'player1' ? 'player2' : 'player1')) as 'player1' | 'player2'}
-                  rivalPlayerName={gameState.mode === GameMode.VS_AI ? 'IA' : `JUGADOR ${gameState.currentTurn === 'player1' ? '2' : '1'}`}
+                  rivalPlayerName={gameState.mode === GameMode.VS_AI ? 'AI' : `PLAYER ${gameState.currentTurn === 'player1' ? '2' : '1'}`}
                   onStop={handlePenaltyStop}
                 />
               </motion.div>
@@ -355,9 +369,9 @@ export default function FootballGame() {
                 exit={{ opacity: 0 }}
                 className={styles.extraTime}
               >
-                <div className={styles.extraTimeTitle}>⏱️ PRÓRROGA!</div>
-                <div style={{ fontSize: '1.2rem', marginBottom: '20px' }}>
-                  Empate a {gameState.player1Score} - {gameState.player2Score}
+                <div className={styles.extraTimeTitle}>⏱️ OVERTIME!</div>
+                <div style={{ fontSize: '1.1rem', marginBottom: '20px', fontFamily: 'Courier New, monospace', color: '#888' }}>
+                  Draw {gameState.player1Score} - {gameState.player2Score}
                 </div>
                 <button
                   className={styles.playButton}
@@ -379,7 +393,7 @@ export default function FootballGame() {
                     }, 1000);
                   }}
                 >
-                  INICIAR PRÓRROGA (30 seg)
+                  START OVERTIME (30 sec)
                 </button>
               </motion.div>
             )}
@@ -392,20 +406,20 @@ export default function FootballGame() {
                 exit={{ opacity: 0 }}
                 className={styles.penaltyShootout}
               >
-                <div className={styles.penaltyHeader}>🥅 TANDA DE PENALES</div>
+                <div className={styles.penaltyHeader}>🥅 PENALTY SHOOTOUT</div>
                 <div className={styles.penaltyTurn}>
-                  <div className={styles.penaltyTurnLabel}>Ronda</div>
+                  <div className={styles.penaltyTurnLabel}>Round</div>
                   <div className={styles.penaltyTurnPlayer}>{gameState.penaltyRound}/5</div>
                 </div>
 
                 <div className={styles.penaltyScore}>
                   <div className={styles.penaltyScoreItem}>
                     <div className={styles.penaltyScoreValue}>{gameState.player1PenaltyScore}</div>
-                    <div className={styles.penaltyScoreLabel}>JUGADOR 1</div>
+                    <div className={styles.penaltyScoreLabel}>PLAYER 1</div>
                   </div>
                   <div className={styles.penaltyScoreItem}>
                     <div className={styles.penaltyScoreValue}>{gameState.player2PenaltyScore}</div>
-                    <div className={styles.penaltyScoreLabel}>{gameState.mode === GameMode.VS_AI ? 'IA' : 'JUGADOR 2'}</div>
+                    <div className={styles.penaltyScoreLabel}>{gameState.mode === GameMode.VS_AI ? 'AI' : 'PLAYER 2'}</div>
                   </div>
                 </div>
 
@@ -417,7 +431,8 @@ export default function FootballGame() {
                     engineRef.current?.takePenalty(currentPlayer, value);
                   }}
                   disabled={!gameState.isPlaying || gameState.isPaused}
-                  playerId={gameState.mode === GameMode.VS_AI ? 'JUGADOR' : `JUGADOR ${gameState.currentTurn === 'player1' ? '1' : '2'}`}
+                  playerId={gameState.mode === GameMode.VS_AI ? 'PLAYER' : `PLAYER ${gameState.currentTurn === 'player1' ? '1' : '2'}`}
+                  stopwatchStarted={stopwatchStarted}
                 />
               </motion.div>
             )}
@@ -449,6 +464,22 @@ export default function FootballGame() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Goal Celebration Animation */}
+      <AnimatePresence>
+        {showGoalCelebration && (
+          <motion.div
+            key="goal-celebration"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={styles.goalCelebration}
+          >
+            <div className={styles.goalText}>GOAL! ⚽</div>
+            <div className={styles.goalEmoji}>🏃</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

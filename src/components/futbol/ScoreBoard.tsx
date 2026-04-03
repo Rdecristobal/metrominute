@@ -18,8 +18,8 @@ export default function ScoreBoard({
   player2Fouls,
   matchTime,
   isExtraTime,
-  player1Name = 'JUGADOR 1',
-  player2Name = 'JUGADOR 2'
+  player1Name = 'PLAYER 1',
+  player2Name = 'PLAYER 2'
 }: ScoreBoardProps) {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -32,19 +32,18 @@ export default function ScoreBoard({
       <div className={styles.playerSection}>
         <div className={styles.playerName}>{player1Name}</div>
         <div className={styles.playerScore}>{player1Score}</div>
-        <div className={styles.playerFouls}>⚠️ {player1Fouls}</div>
+        <div className={styles.playerFouls}>{player1Fouls}</div>
       </div>
 
       <div className={styles.vsSection}>
-        <div className={styles.vsText}>VS</div>
         <div className={styles.matchTime}>{formatTime(matchTime)}</div>
-        {isExtraTime && <div className={styles.extraTimeBadge}>PRÓRROGA</div>}
+        {isExtraTime && <div className={styles.extraTimeBadge}>OT</div>}
       </div>
 
       <div className={styles.playerSection}>
         <div className={styles.playerName}>{player2Name}</div>
         <div className={styles.playerScore}>{player2Score}</div>
-        <div className={styles.playerFouls}>⚠️ {player2Fouls}</div>
+        <div className={styles.playerFouls}>{player2Fouls}</div>
       </div>
     </div>
   );

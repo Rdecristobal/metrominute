@@ -13,7 +13,7 @@ function GameContent() {
   );
 }
 
-export default function FutbolPage() {
+export default function FootballPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-screen bg-retro-dark">

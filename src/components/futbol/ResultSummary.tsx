@@ -26,8 +26,8 @@ export default function ResultSummary({
   onHome
 }: ResultSummaryProps) {
   const getWinnerText = (): string => {
-    if (winner === 'draw') return '¡EMPATE!';
-    return winner === 'player1' ? '¡VICTORIA!' : '¡DERROTA!';
+    if (winner === 'draw') return 'DRAW';
+    return winner === 'player1' ? 'VICTORY' : 'DEFEAT';
   };
 
   const getWinnerClass = (): string => {
@@ -48,7 +48,7 @@ export default function ResultSummary({
     <div className={styles.resultSummary}>
       {isNewRecord && (
         <div className={styles.newRecordBadge}>
-          🎉 NUEVO RÉCORD PERSONAL 🎉
+          NEW PERSONAL RECORD
         </div>
       )}
 
@@ -68,42 +68,42 @@ export default function ResultSummary({
 
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>⚽ Goles Perfectos</div>
+          <div className={styles.statLabel}>PERFECT GOALS</div>
           <div className={styles.statValue}>{stats.perfectGoals}</div>
         </div>
 
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>🎯 Intentos</div>
+          <div className={styles.statLabel}>ATTEMPTS</div>
           <div className={styles.statValue}>{stats.totalAttempts}</div>
         </div>
 
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>🥅 Penales</div>
+          <div className={styles.statLabel}>PENALTIES</div>
           <div className={styles.statValue}>{stats.penaltiesConceded}</div>
         </div>
 
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>⚠️ Faltas</div>
+          <div className={styles.statLabel}>FOULS</div>
           <div className={styles.statValue}>{stats.foulsConceded}</div>
         </div>
 
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>🎯 Mejor Parada</div>
+          <div className={styles.statLabel}>BEST STOP</div>
           <div className={styles.statValue}>{formatBestStop()}</div>
         </div>
 
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>📊 Precisión</div>
+          <div className={styles.statLabel}>ACCURACY</div>
           <div className={styles.statValue}>{averageAccuracy}%</div>
         </div>
       </div>
 
       <div className={styles.buttonGroup}>
         <button className={`${styles.button} ${styles.buttonPrimary}`} onClick={onRetry}>
-          JUGAR DE NUEVO
+          PLAY AGAIN
         </button>
         <button className={`${styles.button} ${styles.buttonSecondary}`} onClick={onHome}>
-          VOLVER AL INICIO
+          BACK
         </button>
       </div>
     </div>

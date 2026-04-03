@@ -9,6 +9,8 @@ interface StopwatchProps {
   playerId?: string;
   outcome?: string;
   outcomeType?: 'goal' | 'penalty' | 'foul' | 'turnover';
+  isPlayerTurn?: boolean;
+  stopwatchStarted?: boolean;
 }
 
 export default function Stopwatch({
@@ -18,7 +20,9 @@ export default function Stopwatch({
   disabled = false,
   playerId,
   outcome,
-  outcomeType
+  outcomeType,
+  isPlayerTurn = true,
+  stopwatchStarted = false
 }: StopwatchProps) {
   const formatValue = (val: number): string => {
     return val.toFixed(2).padStart(5, '0');
@@ -30,39 +34,45 @@ export default function Stopwatch({
     return styles.red;
   };
 
-  const handleStop = () => {
-    if (!disabled && isRunning) {
-      onStop(value);
-    }
+  const handleAction = () => {
+    if (disabled || !isPlayerTurn) return;
+
+    // Call onStop which will be handled by parent to toggle START/STOP
+    onStop(value);
   };
+
+  // Determine if button should show START or STOP
+  // If stopwatch is running but not yet "started" by player, show START
+  // Otherwise show STOP when running
+  const showStopButton = isRunning && stopwatchStarted;
 
   return (
     <div className={styles.stopwatchContainer}>
       {playerId && (
         <div className={styles.playerLabel}>
-          ⚽ TURNO DE {playerId}
+          {playerId}&apos;S TURN
         </div>
       )}
 
       <motion.div
         className={`${styles.stopwatchDisplay} ${getColorClass(value)}`}
         animate={{
-          scale: isRunning ? [1, 1.02, 1] : 1,
+          scale: stopwatchStarted ? [1, 1.01, 1] : 1,
         }}
         transition={{
           duration: 0.5,
-          repeat: isRunning ? Infinity : 0,
+          repeat: stopwatchStarted ? Infinity : 0,
         }}
       >
         {formatValue(value)}
       </motion.div>
 
       <button
-        className={`${styles.stopButton} ${isRunning ? styles.running : ''}`}
-        onClick={handleStop}
-        disabled={disabled || !isRunning}
+        className={`${styles.stopButton} ${showStopButton ? styles.running : ''}`}
+        onClick={handleAction}
+        disabled={disabled || !isPlayerTurn}
       >
-        {isRunning ? '⚽ DETENER' : '⏳ ESPERANDO'}
+        {showStopButton ? 'STOP' : 'START'}
       </button>
 
       {outcome && outcomeType && (

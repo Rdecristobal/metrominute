@@ -44,7 +44,7 @@ export default function PenaltyControl({
 
     setPrediction(pred);
 
-    // Verificar si acertó
+    // Check if correct
     const wholeValue = Math.floor(stopwatchValue);
     const actualParity = wholeValue % 2 === 0 ? 'even' : 'odd';
 
@@ -54,7 +54,7 @@ export default function PenaltyControl({
       setResult('miss');
     }
 
-    // Notificar al engine
+    // Notify engine
     onStop(stopwatchValue, pred);
   };
 
@@ -64,10 +64,10 @@ export default function PenaltyControl({
 
   return (
     <div className={styles.penaltyControl}>
-      <div className={styles.title}>🥅 PENALTY!</div>
+      <div className={styles.title}>PENALTY!</div>
 
       <div className={styles.description}>
-        {rivalPlayerName} lanzó el cronómetro y dice:
+        {rivalPlayerName} stopped at:
       </div>
 
       <div className={styles.stoppedValue}>
@@ -79,12 +79,12 @@ export default function PenaltyControl({
           className={`${styles.stopwatchButton} ${isRunning ? styles.running : ''}`}
           onClick={isRunning ? stopStopwatch : startStopwatch}
         >
-          {isRunning ? '⚽ DETENER' : '🚀 LANZAR CRONÓMETRO'}
+          {isRunning ? 'STOP' : 'START'}
         </button>
       ) : (
         <div className={styles.predictions}>
           <div className={styles.predictionLabel}>
-            ¿El número es PAR o IMPAR?
+            EVEN OR ODD?
           </div>
 
           <div className={styles.predictionButtons}>
@@ -93,7 +93,7 @@ export default function PenaltyControl({
               onClick={() => handlePrediction('even')}
               disabled={prediction !== null}
             >
-              PAR
+              EVEN
             </button>
 
             <button
@@ -101,13 +101,13 @@ export default function PenaltyControl({
               onClick={() => handlePrediction('odd')}
               disabled={prediction !== null}
             >
-              IMPAR
+              ODD
             </button>
           </div>
 
           {result && (
             <div className={`${styles.resultMessage} ${styles[result]}`}>
-              {result === 'goal' ? '⚽ ¡GOL!' : '❌ ¡FALTA!'}
+              {result === 'goal' ? 'GOAL!' : 'MISS'}
             </div>
           )}
         </div>

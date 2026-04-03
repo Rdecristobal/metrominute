@@ -3,61 +3,71 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 20px 0;
+}
+
+.playerLabel {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
 }
 
 .stopwatchDisplay {
-  font-size: 6rem;
+  font-size: 5.5rem;
   font-weight: bold;
   font-family: 'Courier New', monospace;
-  padding: 20px 40px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 4px solid;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  padding: 25px 40px;
+  border-radius: 12px;
+  background: #111;
+  border: 3px solid #222;
   margin-bottom: 30px;
-  transition: all 0.3s ease;
-  min-width: 280px;
+  min-width: 300px;
   text-align: center;
+  color: #FFF;
+  transition: all 0.3s ease;
+  letter-spacing: 4px;
 }
 
 .stopwatchDisplay.green {
-  border-color: #10B981;
-  color: #10B981;
-  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+  border-color: #00FF7F;
+  color: #00FF7F;
+  background: #0D3B2E;
 }
 
 .stopwatchDisplay.yellow {
-  border-color: #F59E0B;
-  color: #F59E0B;
-  box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+  border-color: #FFA500;
+  color: #FFA500;
+  background: #3D2D0A;
 }
 
 .stopwatchDisplay.red {
-  border-color: #EF4444;
-  color: #EF4444;
-  box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3);
+  border-color: #FF4444;
+  color: #FF4444;
+  background: #3D0A0A;
 }
 
 .stopButton {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
-  padding: 20px 60px;
-  border-radius: 15px;
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-  color: white;
+  padding: 18px 50px;
+  border-radius: 10px;
+  background: #FFF;
+  color: #000;
   border: none;
   cursor: pointer;
-  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
   transition: all 0.2s ease;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   min-width: 200px;
+  font-family: 'Courier New', monospace;
 }
 
 .stopButton:hover:not(:disabled) {
+  background: #E0E0E0;
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.5);
 }
 
 .stopButton:active:not(:disabled) {
@@ -65,13 +75,19 @@
 }
 
 .stopButton:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
   transform: none;
 }
 
 .stopButton.running {
+  background: #FF4444;
+  color: #FFF;
   animation: pulse 1s ease-in-out infinite;
+}
+
+.stopButton.running:hover:not(:disabled) {
+  background: #CC3333;
 }
 
 @keyframes pulse {
@@ -79,40 +95,35 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
 }
 
-.playerLabel {
-  font-size: 1.2rem;
-  color: #9CA3AF;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
 .outcomeMessage {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
   margin-top: 20px;
   text-align: center;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
   animation: fadeIn 0.3s ease;
+  text-transform: uppercase;
 }
 
 .outcomeMessage.goal {
-  color: #10B981;
+  color: #00FF7F;
 }
 
 .outcomeMessage.penalty {
-  color: #F59E0B;
+  color: #FFA500;
 }
 
 .outcomeMessage.foul {
-  color: #F59E0B;
+  color: #FFA500;
 }
 
 .outcomeMessage.turnover {
-  color: #6B7280;
+  color: #888;
 }
 
 @keyframes fadeIn {

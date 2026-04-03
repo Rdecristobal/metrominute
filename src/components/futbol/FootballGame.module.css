@@ -1,56 +1,57 @@
 .gameContainer {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+  background: #0A0A0A;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  font-family: 'Courier New', monospace;
 }
 
 .gameWrapper {
   width: 100%;
   max-width: 500px;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
-  border-radius: 20px;
-  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0A0A0A;
+  border-radius: 16px;
   overflow: hidden;
 }
 
 .gameHeader {
-  background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%);
+  background: #0A0A0A;
   padding: 15px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #1A1A1A;
 }
 
 .gameTitle {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  color: white;
+  color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
 }
 
 .backButton {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  font-family: 'Courier New', monospace;
 }
 
 .backButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+  background: #1A1A1A;
+  color: #FFF;
 }
 
 .gameContent {
@@ -64,49 +65,51 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
+  gap: 24px;
   padding: 30px 20px;
 }
 
 .logo {
-  font-size: 5rem;
-  margin-bottom: 20px;
+  font-size: 4rem;
+  margin-bottom: 10px;
   animation: bounce 2s ease-in-out infinite;
 }
 
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
 }
 
 .title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   color: #FFFFFF;
   text-align: center;
-  text-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 3px;
 }
 
 .subtitle {
-  font-size: 1.1rem;
-  color: #9CA3AF;
+  font-size: 0.9rem;
+  color: #666;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  font-family: 'Courier New', monospace;
 }
 
 .modeSelector {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
   width: 100%;
-  max-width: 350px;
+  max-width: 320px;
 }
 
 .modeButton {
-  padding: 15px 20px;
-  border-radius: 12px;
-  font-size: 1rem;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 0.9rem;
   font-weight: bold;
   border: 2px solid;
   cursor: pointer;
@@ -116,40 +119,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  background: transparent;
+  font-family: 'Courier New', monospace;
 }
 
 .modeButton.vsAi {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: #3B82F6;
-  color: #3B82F6;
+  border-color: #333;
+  color: #666;
 }
 
 .modeButton.vsAi.selected {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  color: white;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  background: #1A1A1A;
+  border-color: #FFF;
+  color: #FFF;
 }
 
 .modeButton.vsPlayer {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: #10B981;
-  color: #10B981;
+  border-color: #333;
+  color: #666;
 }
 
 .modeButton.vsPlayer.selected {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+  background: #1A1A1A;
+  border-color: #FFF;
+  color: #FFF;
 }
 
 .modeButton:hover:not(.selected) {
-  transform: translateY(-2px);
+  background: #111;
+  border-color: #444;
 }
 
 .durationSelector {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   justify-content: center;
   flex-wrap: wrap;
@@ -158,50 +162,52 @@
 .durationButton {
   flex: 1;
   min-width: 80px;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: bold;
   border: 2px solid;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: transparent;
+  border-color: #333;
+  color: #666;
+  font-family: 'Courier New', monospace;
 }
 
 .durationButton.selected {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-  border-color: #F59E0B;
-  color: white;
-  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+  background: #FFF;
+  border-color: #FFF;
+  color: #000;
 }
 
 .durationButton:hover:not(.selected) {
-  background: rgba(255, 255, 255, 0.1);
+  background: #111;
+  border-color: #444;
+  color: #888;
 }
 
 .playButton {
   width: 100%;
-  max-width: 350px;
-  padding: 20px 40px;
-  border-radius: 15px;
-  font-size: 1.4rem;
+  max-width: 320px;
+  padding: 18px 40px;
+  border-radius: 10px;
+  font-size: 1.2rem;
   font-weight: bold;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 2px;
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+  background: #FFF;
+  color: #000;
+  font-family: 'Courier New', monospace;
 }
 
 .playButton:hover {
+  background: #E0E0E0;
   transform: translateY(-2px);
-  box-shadow: 0 10px 35px rgba(16, 185, 129, 0.5);
 }
 
 .countdown {
@@ -213,11 +219,11 @@
 }
 
 .countdownNumber {
-  font-size: 8rem;
+  font-size: 7rem;
   font-weight: bold;
-  color: #FFFFFF;
-  text-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
+  color: #FFF;
   animation: scaleIn 0.5s ease;
+  font-family: 'Courier New', monospace;
 }
 
 @keyframes scaleIn {
@@ -238,19 +244,20 @@
 }
 
 .extraTime {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  background: #1A1A1A;
   color: white;
   padding: 20px;
-  border-radius: 15px;
+  border-radius: 10px;
   text-align: center;
 }
 
 .extraTimeTitle {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
 }
 
 .penaltyShootout {
@@ -260,17 +267,18 @@
 }
 
 .penaltyHeader {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: bold;
-  color: #EF4444;
+  color: #FFF;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 20px;
+  font-family: 'Courier New', monospace;
 }
 
 .penaltyTurn {
-  background: rgba(255, 255, 255, 0.05);
+  background: #1A1A1A;
   padding: 15px;
   border-radius: 10px;
   text-align: center;
@@ -278,17 +286,19 @@
 }
 
 .penaltyTurnLabel {
-  font-size: 0.9rem;
-  color: #9CA3AF;
+  font-size: 0.8rem;
+  color: #666;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 10px;
+  font-family: 'Courier New', monospace;
 }
 
 .penaltyTurnPlayer {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
-  color: #FFFFFF;
+  color: #FFF;
+  font-family: 'Courier New', monospace;
 }
 
 .penaltyScore {
@@ -301,21 +311,120 @@
 .penaltyScoreItem {
   text-align: center;
   padding: 15px 25px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #1A1A1A;
   border-radius: 10px;
   min-width: 120px;
 }
 
 .penaltyScoreValue {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: bold;
-  color: #10B981;
+  color: #00FF7F;
+  font-family: 'Courier New', monospace;
 }
 
 .penaltyScoreLabel {
-  font-size: 0.8rem;
-  color: #9CA3AF;
+  font-size: 0.7rem;
+  color: #666;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 5px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Goal Celebration Animation */
+.goalCelebration {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  pointer-events: none;
+  animation: goalAnimation 1.5s ease-in-out forwards;
+}
+
+.goalText {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #00FF7F;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 20px rgba(0, 255, 127, 0.5);
+  animation: pulseGoal 0.5s ease-in-out infinite alternate;
+}
+
+.goalEmoji {
+  font-size: 5rem;
+  text-align: center;
+  animation: bounceGoal 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes goalAnimation {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+@keyframes pulseGoal {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes bounceGoal {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Pixel Art Player */
+.pixelPlayer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 6rem;
+  animation: celebratePlayer 1.5s ease-in-out forwards;
+  z-index: 999;
+  pointer-events: none;
+}
+
+@keyframes celebratePlayer {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-20deg) scale(0.5);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(10deg) scale(1.2);
+  }
+  60% {
+    transform: translate(-50%, -50%) rotate(-5deg) scale(1);
+  }
+  80% {
+    transform: translate(-50%, -50%) rotate(5deg) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
 }

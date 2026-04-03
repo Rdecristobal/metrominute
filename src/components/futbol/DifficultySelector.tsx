@@ -12,7 +12,7 @@ export default function DifficultySelector({
 }: DifficultySelectorProps) {
   return (
     <div className={styles.difficultySelector}>
-      <div className={styles.label}>Dificultad</div>
+      <div className={styles.label}>DIFFICULTY</div>
 
       <div className={styles.options}>
         <button
@@ -20,7 +20,7 @@ export default function DifficultySelector({
           onClick={() => onSelectDifficulty(AIDifficulty.EASY)}
         >
           <div className={styles.stars}>⭐</div>
-          <div>Fácil</div>
+          <div>EASY</div>
           <div className={styles.description}>Error: 30¢</div>
         </button>
 
@@ -29,7 +29,7 @@ export default function DifficultySelector({
           onClick={() => onSelectDifficulty(AIDifficulty.MEDIUM)}
         >
           <div className={styles.stars}>⭐⭐</div>
-          <div>Medio</div>
+          <div>MEDIUM</div>
           <div className={styles.description}>Error: 15¢</div>
         </button>
 
@@ -38,7 +38,7 @@ export default function DifficultySelector({
           onClick={() => onSelectDifficulty(AIDifficulty.HARD)}
         >
           <div className={styles.stars}>⭐⭐⭐</div>
-          <div>Difícil</div>
+          <div>HARD</div>
           <div className={styles.description}>Error: 8¢</div>
         </button>
       </div>
