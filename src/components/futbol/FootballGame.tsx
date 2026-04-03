@@ -59,7 +59,8 @@ export default function FootballGame() {
   const [outcomeOverlay, setOutcomeOverlay] = useState<{
     type: OutcomeType;
     value: number;
-  }>({ type: null, value: 0 });
+    scorer?: 'player' | 'ai';
+  }>({ type: null, value: 0, scorer: undefined });
 
   // Penalty prediction state
   const [penaltyPrediction, setPenaltyPrediction] = useState<'even' | 'odd' | null>(null);
@@ -78,12 +79,12 @@ export default function FootballGame() {
     const unsubscribe = engineRef.current.subscribe((state) => {
       // Check if AI outcome changed and show overlay
       if (state.lastAIOutcome && state.lastAIOutcome !== gameState.lastAIOutcome) {
-        showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value);
+        showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value, 'ai');
       }
 
       // Check if player outcome changed and show overlay
       if (state.lastPlayerOutcome && state.lastPlayerOutcome !== gameState.lastPlayerOutcome) {
-        showOutcome(state.lastPlayerOutcome.outcome, state.lastPlayerOutcome.value);
+        showOutcome(state.lastPlayerOutcome.outcome, state.lastPlayerOutcome.value, 'player');
         // Set foul retry flag if outcome is foul
         if (state.lastPlayerOutcome.outcome === 'foul') {
           setIsFoulRetry(true);
@@ -121,10 +122,10 @@ export default function FootballGame() {
     };
   }, [selectedMode, selectedDuration, selectedDifficulty]);
 
-  const showOutcome = useCallback((type: OutcomeType, value: number) => {
-    setOutcomeOverlay({ type, value });
-    const duration = type === 'goal' ? 2000 : type === 'turnover' ? 1000 : 1500;
-    setTimeout(() => setOutcomeOverlay({ type: null, value: 0 }), duration);
+  const showOutcome = useCallback((type: OutcomeType, value: number, scorer?: 'player' | 'ai') => {
+    setOutcomeOverlay({ type, value, scorer });
+    const duration = type === 'goal' ? 2500 : type === 'turnover' ? 1000 : 1500;
+    setTimeout(() => setOutcomeOverlay({ type: null, value: 0, scorer: undefined }), duration);
   }, []);
 
   const handleMainButton = useCallback(() => {
@@ -208,27 +209,79 @@ export default function FootballGame() {
           >
             {outcomeOverlay.type === 'goal' && (
               <>
-                <div className={styles.goalPlayer}>⚽</div>
-                <div className={styles.goalText}>GOAL!</div>
-                <div className={styles.goalValue}>{formatStopwatch(outcomeOverlay.value)}</div>
-                <div className={styles.pixelCelebration}>
-                  <svg width="80" height="100" viewBox="0 0 80 100" fill="none">
-                    {/* Pixel art player celebrating */}
-                    <rect x="30" y="5" width="20" height="20" fill="#FFD700" />
-                    <rect x="25" y="10" width="5" height="10" fill="#FFD700" />
-                    <rect x="50" y="10" width="5" height="10" fill="#FFD700" />
-                    <rect x="35" y="25" width="10" height="25" fill="#FFF" />
-                    {/* Arms up */}
-                    <rect x="20" y="25" width="15" height="5" fill="#FFD700" />
-                    <rect x="15" y="20" width="8" height="5" fill="#FFD700" />
-                    <rect x="45" y="25" width="15" height="5" fill="#FFD700" />
-                    <rect x="57" y="20" width="8" height="5" fill="#FFD700" />
-                    <rect x="35" y="50" width="10" height="25" fill="#333" />
-                    <rect x="30" y="75" width="12" height="20" fill="#333" />
-                    <rect x="42" y="75" width="12" height="20" fill="#333" />
-                    {/* Ball */}
-                    <circle cx="40" cy="95" r="4" fill="#FFF" stroke="#333" strokeWidth="1" />
+                <div className={styles.goalPlayer}>
+                  {/* Pixel art player celebrating - 16-bit style, no anti-aliasing */}
+                  <svg
+                    width="200"
+                    height="280"
+                    viewBox="0 0 200 280"
+                    fill="none"
+                    className={styles.pixelPlayerSvg}
+                  >
+                    {/* Head */}
+                    <rect x="75" y="15" width="50" height="50" fill="#FFD93D" />
+                    {/* Hair */}
+                    <rect x="70" y="10" width="60" height="15" fill="#4A3728" />
+                    <rect x="65" y="20" width="10" height="10" fill="#4A3728" />
+                    <rect x="125" y="20" width="10" height="10" fill="#4A3728" />
+                    {/* Eyes - determined expression */}
+                    <rect x="82" y="35" width="12" height="8" fill="#000" />
+                    <rect x="106" y="35" width="12" height="8" fill="#000" />
+                    {/* Mouth - shouting in celebration */}
+                    <rect x="92" y="55" width="16" height="12" fill="#000" />
+                    {/* Neck */}
+                    <rect x="88" y="65" width="24" height="15" fill="#FFD93D" />
+                    {/* Torso - shirt color based on scorer */}
+                    {outcomeOverlay.scorer === 'ai' ? (
+                      // AI player - blue shirt
+                      <>
+                        <rect x="55" y="80" width="90" height="80" fill="#4488FF" />
+                        <rect x="45" y="85" width="15" height="70" fill="#4488FF" />
+                        <rect x="140" y="85" width="15" height="70" fill="#4488FF" />
+                      </>
+                    ) : (
+                      // Player - pink neon shirt
+                      <>
+                        <rect x="55" y="80" width="90" height="80" fill="#FF2D78" />
+                        <rect x="45" y="85" width="15" height="70" fill="#FF2D78" />
+                        <rect x="140" y="85" width="15" height="70" fill="#FF2D78" />
+                      </>
+                    )}
+                    {/* Arms up celebrating */}
+                    <rect x="20" y="75" width="35" height="15" fill="#FFD93D" />
+                    <rect x="10" y="65" width="15" height="25" fill="#FFD93D" />
+                    <rect x="145" y="75" width="35" height="15" fill="#FFD93D" />
+                    <rect x="175" y="65" width="15" height="25" fill="#FFD93D" />
+                    {/* Hands - fists closed */}
+                    <rect x="8" y="55" width="20" height="20" fill="#FFD93D" />
+                    <rect x="172" y="55" width="20" height="20" fill="#FFD93D" />
+                    {/* Shorts - white */}
+                    <rect x="60" y="160" width="80" height="45" fill="#FFF" />
+                    <rect x="55" y="165" width="10" height="40" fill="#FFF" />
+                    <rect x="135" y="165" width="10" height="40" fill="#FFF" />
+                    {/* Legs */}
+                    <rect x="60" y="205" width="30" height="60" fill="#FFD93D" />
+                    <rect x="110" y="205" width="30" height="60" fill="#FFD93D" />
+                    {/* Boots - black */}
+                    <rect x="55" y="255" width="40" height="25" fill="#1A1A1A" />
+                    <rect x="105" y="255" width="40" height="25" fill="#1A1A1A" />
                   </svg>
+                </div>
+                <div className={styles.goalText}>
+                  {outcomeOverlay.scorer === 'ai' ? 'AI GOAL!' : 'GOAL!'}
+                </div>
+                <div className={styles.goalValue}>{formatStopwatch(outcomeOverlay.value)}</div>
+                {/* Confetti particles */}
+                <div className={styles.confettiContainer}>
+                  <div className={styles.confetti} style={{ left: '10%', animationDelay: '0s' }}></div>
+                  <div className={styles.confetti} style={{ left: '20%', animationDelay: '0.2s' }}></div>
+                  <div className={styles.confetti} style={{ left: '30%', animationDelay: '0.4s' }}></div>
+                  <div className={styles.confetti} style={{ left: '40%', animationDelay: '0.6s' }}></div>
+                  <div className={styles.confetti} style={{ left: '50%', animationDelay: '0.1s' }}></div>
+                  <div className={styles.confetti} style={{ left: '60%', animationDelay: '0.3s' }}></div>
+                  <div className={styles.confetti} style={{ left: '70%', animationDelay: '0.5s' }}></div>
+                  <div className={styles.confetti} style={{ left: '80%', animationDelay: '0.7s' }}></div>
+                  <div className={styles.confetti} style={{ left: '90%', animationDelay: '0.9s' }}></div>
                 </div>
               </>
             )}

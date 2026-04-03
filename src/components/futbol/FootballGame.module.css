@@ -351,35 +351,113 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .goal {
-  background: rgba(0, 255, 127, 0.1);
+  background: linear-gradient(135deg, #00FF7F 0%, #00CC66 100%);
 }
 
 .goalPlayer {
-  font-size: 5rem;
-  animation: goalBounce 0.4s ease infinite alternate;
+  margin-bottom: 20px;
+  animation: celebrate 0.6s ease-in-out infinite;
+}
+
+.pixelPlayerSvg {
+  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+  shape-rendering: crispEdges;
 }
 
 .goalText {
-  font-size: 4rem;
-  font-weight: 700;
-  color: #00FF7F;
-  letter-spacing: 8px;
-  text-shadow: 0 0 40px rgba(0, 255, 127, 0.5);
+  font-size: 6rem;
+  font-weight: 900;
+  color: #FF2D78;
+  letter-spacing: 12px;
+  text-shadow:
+    0 0 20px #FF2D78,
+    0 0 40px #FF2D78,
+    0 0 60px #FF2D78;
+  margin: 10px 0;
+  animation: textGlow 1s ease-in-out infinite alternate;
 }
 
 .goalValue {
-  font-size: 1.2rem;
-  color: #00FF7F;
-  margin-top: 8px;
-  opacity: 0.7;
+  font-size: 1.5rem;
+  color: #FFF;
+  margin-top: 12px;
+  opacity: 0.9;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.pixelCelebration {
-  margin-top: 20px;
+/* Confetti container */
+.confettiContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #FF2D78;
+  top: -20px;
+  animation: confettiFall 3s linear infinite;
+}
+
+.confetti:nth-child(2n) {
+  background: #FFD700;
+  animation-duration: 2.5s;
+}
+
+.confetti:nth-child(3n) {
+  background: #00CC66;
+  animation-duration: 2.8s;
+}
+
+.confetti:nth-child(4n) {
+  background: #4488FF;
+  animation-duration: 3.2s;
+}
+
+@keyframes celebrate {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-25px);
+  }
+}
+
+@keyframes textGlow {
+  0% {
+    text-shadow:
+      0 0 20px #FF2D78,
+      0 0 40px #FF2D78,
+      0 0 60px #FF2D78;
+  }
+  100% {
+    text-shadow:
+      0 0 30px #FF2D78,
+      0 0 60px #FF2D78,
+      0 0 90px #FF2D78;
+  }
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 .penalty {
@@ -617,4 +695,43 @@
   gap: 12px;
   width: 100%;
   max-width: 300px;
+}
+
+/* ===== RESPONSIVE STYLES ===== */
+@media (max-width: 768px) {
+  .goalText {
+    font-size: 4rem;
+    letter-spacing: 6px;
+  }
+
+  .goalPlayer svg {
+    width: 150px;
+    height: 210px;
+  }
+
+  .pixelPlayerSvg {
+    width: 150px;
+    height: 210px;
+  }
+
+  .goalValue {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .goalText {
+    font-size: 3rem;
+    letter-spacing: 4px;
+  }
+
+  .goalPlayer svg {
+    width: 120px;
+    height: 168px;
+  }
+
+  .pixelPlayerSvg {
+    width: 120px;
+    height: 168px;
+  }
 }
