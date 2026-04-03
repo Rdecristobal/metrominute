@@ -354,11 +354,19 @@ export class FootballEngine {
   }
 
   // ========== STOPWATCH ==========
+  private stopwatchStartTime: number = 0;
+  private stopwatchStartValue: number = 0;
+
   private runStopwatch(): void {
     if (this.stopwatchInterval) clearInterval(this.stopwatchInterval);
+    this.stopwatchStartTime = Date.now();
+    this.stopwatchStartValue = this.state.stopwatchValue;
     this.stopwatchInterval = setInterval(() => {
       if (!this.state.stopwatchRunning || !this.state.isPlaying) return;
-      this.state.stopwatchValue = (this.state.stopwatchValue + 0.01) % 100;
+      const elapsed = (Date.now() - this.stopwatchStartTime) / 10; // centiseconds
+      const rawValue = (this.stopwatchStartValue + elapsed / 100) % 100;
+      // Round to 2 decimals for clean display
+      this.state.stopwatchValue = Math.round(rawValue * 100) / 100;
       this.notify();
     }, 10);
   }
