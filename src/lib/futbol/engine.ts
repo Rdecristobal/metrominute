@@ -61,7 +61,8 @@ export class FootballEngine {
       isExtraTime: false,
       isPenalties: false,
       isNewRecord: false,
-      lastAIOutcome: null
+      lastAIOutcome: null,
+      lastPlayerOutcome: null
     };
   }
 
@@ -154,11 +155,13 @@ export class FootballEngine {
     }
 
     // Process outcome
+    let scored = false;
     switch (scoring.outcome) {
       case 'goal':
         this.state.perfectGoals++;
         if (currentPlayer === 'player1') this.state.player1Score++;
         else this.state.player2Score++;
+        scored = true;
         break;
 
       case 'penalty':
@@ -167,6 +170,12 @@ export class FootballEngine {
         else this.state.player2Fouls++;
         this.state.screen = GameScreen.PENALTY_RESULT;
         this.state.stopwatchValue = 0;
+        // Save player outcome for UI to display
+        this.state.lastPlayerOutcome = {
+          outcome: scoring.outcome,
+          value,
+          scored: false
+        };
         this.notify();
         return; // Don't change turn — penalty screen takes over
 
@@ -176,6 +185,12 @@ export class FootballEngine {
         else this.state.player2Fouls++;
         // Foul = retry for same player, reset stopwatch but don't change turn
         this.state.stopwatchValue = 0;
+        // Save player outcome for UI to display
+        this.state.lastPlayerOutcome = {
+          outcome: scoring.outcome,
+          value,
+          scored: false
+        };
         this.notify();
         return; // Same player's turn again
 
@@ -183,6 +198,13 @@ export class FootballEngine {
         // Turn passes to rival
         break;
     }
+
+    // Save player outcome for UI to display
+    this.state.lastPlayerOutcome = {
+      outcome: scoring.outcome,
+      value,
+      scored
+    };
 
     // Switch turns
     this.switchTurn();
@@ -209,6 +231,13 @@ export class FootballEngine {
       if (currentPlayer === 'player1') this.state.player1Score++;
       else this.state.player2Score++;
     }
+
+    // Save player outcome for UI to display
+    this.state.lastPlayerOutcome = {
+      outcome: isGoal ? 'goal' : 'turnover',
+      value,
+      scored: isGoal
+    };
 
     this.state.stopwatchValue = 0;
     this.switchTurn();

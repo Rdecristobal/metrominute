@@ -89,6 +89,13 @@ export interface FootballGameState {
     value: number;
     scored: boolean;
   } | null;
+
+  // Último resultado del jugador
+  lastPlayerOutcome: {
+    outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
+    value: number;
+    scored: boolean;
+  } | null;
 }
 
 export interface AIBehavior {

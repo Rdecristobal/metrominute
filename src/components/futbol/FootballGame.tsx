@@ -43,6 +43,11 @@ export default function FootballGame() {
       value: number;
       scored: boolean;
     } | null,
+    lastPlayerOutcome: null as {
+      outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
+      value: number;
+      scored: boolean;
+    } | null,
   });
 
   const [selectedMode, setSelectedMode] = useState<GameMode>(GameMode.VS_AI);
@@ -76,6 +81,15 @@ export default function FootballGame() {
         showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value);
       }
 
+      // Check if player outcome changed and show overlay
+      if (state.lastPlayerOutcome && state.lastPlayerOutcome !== gameState.lastPlayerOutcome) {
+        showOutcome(state.lastPlayerOutcome.outcome, state.lastPlayerOutcome.value);
+        // Set foul retry flag if outcome is foul
+        if (state.lastPlayerOutcome.outcome === 'foul') {
+          setIsFoulRetry(true);
+        }
+      }
+
       setGameState({
         screen: state.screen,
         isPlaying: state.isPlaying,
@@ -97,6 +111,7 @@ export default function FootballGame() {
         matchDuration: state.matchDuration,
         aiDifficulty: state.aiDifficulty,
         lastAIOutcome: state.lastAIOutcome,
+        lastPlayerOutcome: state.lastPlayerOutcome,
       });
     });
 
@@ -115,54 +130,19 @@ export default function FootballGame() {
   const handleMainButton = useCallback(() => {
     if (!engineRef.current) return;
 
-    if (isFoulRetry) {
-      // Foul retry — button acts as START then STOP
-      if (!gameState.stopwatchRunning) {
-        engineRef.current.playerStart();
-      } else {
-        const prevScore = engineRef.current.getState().player1Score;
-        engineRef.current.foulRetryStop();
-        const newState = engineRef.current.getState();
-        // Check if score changed = goal
-        if (newState.player1Score > prevScore) {
-          showOutcome('goal', newState.stopwatchValue);
-        } else {
-          showOutcome('turnover', newState.stopwatchValue);
-        }
-        setIsFoulRetry(false);
-      }
-      return;
-    }
-
     if (!gameState.stopwatchRunning) {
       // START — begin stopwatch
       engineRef.current.playerStart();
     } else {
-      // STOP — let the engine decide the outcome, then show it
-      const value = Math.round(gameState.stopwatchValue * 100) / 100;
-      engineRef.current.playerStop();
-      // Read the outcome from the engine state after stop
-      const newState = engineRef.current.getState();
-      // Determine what happened based on score changes and screen
-      if (newState.screen === GameScreen.PENALTY_RESULT) {
-        showOutcome('penalty', value);
-        return;
-      }
-      // Check if it was a foul (foul retry flag would have been set by engine? No — we set it here)
-      // Use scoring.ts to determine what the engine saw
-      const hundredths = Math.round((value - Math.floor(value)) * 100);
-      if (hundredths === 0) {
-        showOutcome('goal', value);
-      } else if (hundredths === 1 || hundredths === 99) {
-        showOutcome('penalty', value);
-      } else if (hundredths === 95) {
-        showOutcome('foul', value);
-        setIsFoulRetry(true);
+      // STOP — let the engine decide the outcome and notify via state
+      if (isFoulRetry) {
+        engineRef.current.foulRetryStop();
+        setIsFoulRetry(false);
       } else {
-        showOutcome('turnover', value);
+        engineRef.current.playerStop();
       }
     }
-  }, [gameState.stopwatchRunning, gameState.stopwatchValue, isFoulRetry, showOutcome]);
+  }, [gameState.stopwatchRunning, isFoulRetry]);
 
   const handlePenaltyAction = useCallback(() => {
     if (!engineRef.current) return;
