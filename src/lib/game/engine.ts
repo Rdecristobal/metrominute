@@ -189,7 +189,8 @@ export class GameEngine {
       x,
       y,
       type: 'decoy',
-      size: TARGET_SIZE
+      size: TARGET_SIZE,
+      opacity: 1 // Start visible
     };
 
     this.targets.set(target.id, target);

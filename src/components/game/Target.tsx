@@ -80,7 +80,10 @@ export default function Target({ target, onClick }: TargetProps) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.85 }}
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        animate={{
+          scale: 1,
+          opacity: target.type === 'decoy' ? (target.opacity ?? 1) : 1
+        }}
         exit={{ scale: 0, opacity: 0 }}
       >
         {target.type === 'golden' && (
