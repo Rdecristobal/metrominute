@@ -1,6 +1,15 @@
 import { ScoringResult } from './types';
 
 /**
+ * Redondea un valor a 2 decimales para evitar problemas de floating point
+ * @param value - Valor a redondear
+ * @returns Valor redondeado a 2 decimales
+ */
+function roundTo2Decimals(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/**
  * Calcula el resultado de una parada de cronómetro
  * @param value - Valor del cronómetro (00.00 - 99.99)
  * @returns ScoringResult
@@ -16,8 +25,10 @@ import { ScoringResult } from './types';
  * - FALTA: el jugador actual vuelve a lanzar, si para en X5 → gol, sino → pierde turno
  */
 export function calculateScore(value: number): ScoringResult {
+  const rounded = roundTo2Decimals(value);
+
   // GOL: 00.00
-  if (value === 0) {
+  if (rounded === 0) {
     return {
       outcome: 'goal',
       description: '⚽ GOL!'
@@ -25,7 +36,7 @@ export function calculateScore(value: number): ScoringResult {
   }
 
   // PENALTY: 00.01 o 99.99
-  if (value === 0.01 || value === 99.99) {
+  if (rounded === 0.01 || rounded === 99.99) {
     return {
       outcome: 'penalty',
       description: '🥅 PENALTY! Rival lanza y dice par/impar'
@@ -33,8 +44,8 @@ export function calculateScore(value: number): ScoringResult {
   }
 
   // FALTA: Múltiplo de 5 (05, 10, 15, 20, 25...)
-  const wholeValue = Math.floor(value);
-  if (wholeValue > 0 && wholeValue % 5 === 0) {
+  const wholeValue = Math.floor(rounded);
+  if (wholeValue > 0 && wholeValue % 5 === 0 && (rounded - wholeValue) < 0.02) {
     return {
       outcome: 'foul',
       description: '⚠️ FALTA! Reintento — para en X5 = gol'
@@ -54,7 +65,8 @@ export function calculateScore(value: number): ScoringResult {
  * @returns 'even' si es par, 'odd' si es impar
  */
 export function getParity(value: number): 'even' | 'odd' {
-  const wholeValue = Math.floor(value);
+  const rounded = roundTo2Decimals(value);
+  const wholeValue = Math.floor(rounded);
   return wholeValue % 2 === 0 ? 'even' : 'odd';
 }
 
@@ -64,6 +76,7 @@ export function getParity(value: number): 'even' | 'odd' {
  * @returns true si acaba en 5 (05, 15, 25...), false en otro caso
  */
 export function isFoulGoal(value: number): boolean {
-  const lastDigit = Math.floor(value) % 10;
+  const rounded = roundTo2Decimals(value);
+  const lastDigit = Math.floor(rounded) % 10;
   return lastDigit === 5;
 }

@@ -1,4 +1,4 @@
-// Types for Football Cronometer game
+// Types for Football Stop game
 
 export enum GameScreen {
   HOME = 'home',
@@ -82,6 +82,13 @@ export interface FootballGameState {
   isExtraTime: boolean;
   isPenalties: boolean;
   isNewRecord: boolean;
+
+  // Último resultado de la IA
+  lastAIOutcome: {
+    outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
+    value: number;
+    scored: boolean;
+  } | null;
 }
 
 export interface AIBehavior {

@@ -60,7 +60,8 @@ export class FootballEngine {
       foulsConceded: 0,
       isExtraTime: false,
       isPenalties: false,
-      isNewRecord: false
+      isNewRecord: false,
+      lastAIOutcome: null
     };
   }
 
@@ -126,7 +127,9 @@ export class FootballEngine {
     if (!this.state.stopwatchRunning) return;
 
     this.stopStopwatch();
-    const value = this.state.stopwatchValue;
+    // Round to 2 decimals to avoid floating point issues
+    const value = Math.round(this.state.stopwatchValue * 100) / 100;
+    this.state.stopwatchValue = value;
     const scoring = calculateScore(value);
     const currentPlayer = (this.state.mode === GameMode.VS_AI)
       ? 'player1' as const
@@ -192,7 +195,9 @@ export class FootballEngine {
     if (!this.state.stopwatchRunning) return;
 
     this.stopStopwatch();
-    const value = this.state.stopwatchValue;
+    // Round to 2 decimals to avoid floating point issues
+    const value = Math.round(this.state.stopwatchValue * 100) / 100;
+    this.state.stopwatchValue = value;
     const isGoal = isFoulGoal(value);
     const currentPlayer = (this.state.mode === GameMode.VS_AI)
       ? 'player1' as const
@@ -222,7 +227,9 @@ export class FootballEngine {
     if (!this.state.stopwatchRunning) return;
 
     this.stopStopwatch();
-    const value = this.state.stopwatchValue;
+    // Round to 2 decimals to avoid floating point issues
+    const value = Math.round(this.state.stopwatchValue * 100) / 100;
+    this.state.stopwatchValue = value;
     const parity = getParity(value);
     const isGoal = parity === prediction;
 
@@ -279,51 +286,65 @@ export class FootballEngine {
       this.aiTimeout = setTimeout(() => {
         if (!this.state.stopwatchRunning) return;
         this.stopStopwatch();
-        this.state.stopwatchValue = behavior.targetValue;
 
-        const scoring = calculateScore(behavior.targetValue);
+        // Round to 2 decimals to avoid floating point issues
+        const roundedValue = Math.round(behavior.targetValue * 100) / 100;
+        this.state.stopwatchValue = roundedValue;
+
+        const scoring = calculateScore(roundedValue);
         const attempt: Attempt = {
           playerId: 'ai',
           timestamp: (this.state.isExtraTime ? 30 : this.state.matchDuration) - this.state.matchTime,
-          stopwatchValue: behavior.targetValue,
+          stopwatchValue: roundedValue,
           outcome: scoring.outcome
         };
         this.state.player2Attempts.push(attempt);
         this.state.totalAttempts++;
 
+        let scored = false;
+
         switch (scoring.outcome) {
           case 'goal':
             this.state.player2Score++;
             this.state.perfectGoals++;
+            scored = true;
             break;
           case 'penalty':
             this.state.penaltiesConceded++;
             this.state.player2Fouls++;
-            // AI penalty: simplified — AI predicts and we resolve
-            const aiPrediction = Math.random() > 0.5 ? 'even' as const : 'odd' as const;
-            // Player 1 takes the penalty against AI
-            // For simplicity: resolve immediately
+            // AI concedes penalty to player1
+            // Player will take the penalty in the UI
             this.state.screen = GameScreen.PENALTY_RESULT;
+            this.state.lastAIOutcome = {
+              outcome: 'penalty',
+              value: roundedValue,
+              scored: false
+            };
             this.notify();
-            // Auto-resolve: AI concedes penalty to player1
-            // Player1 "launches" and AI "predicts"
-            // We'll let the player take this penalty in the UI
             return;
           case 'foul':
             this.state.foulsConceded++;
             this.state.player2Fouls++;
             // AI fouls — AI retries
-            // Simplified: AI retries once
+            // Retry once
             this.state.stopwatchValue = 0;
-            const retryValue = Math.random() * 99.99;
+            const retryValue = Math.round(Math.random() * 99.99 * 100) / 100;
             const foulGoal = isFoulGoal(retryValue);
             if (foulGoal) {
               this.state.player2Score++;
+              scored = true;
             }
             break;
           case 'turnover':
             break;
         }
+
+        // Save AI outcome for UI to display
+        this.state.lastAIOutcome = {
+          outcome: scoring.outcome,
+          value: roundedValue,
+          scored
+        };
 
         this.state.currentTurn = 'player1';
         this.state.stopwatchValue = 0;

@@ -38,6 +38,11 @@ export default function FootballGame() {
     mode: GameMode.VS_AI,
     matchDuration: 120 as MatchDuration,
     aiDifficulty: AIDifficulty.MEDIUM,
+    lastAIOutcome: null as {
+      outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
+      value: number;
+      scored: boolean;
+    } | null,
   });
 
   const [selectedMode, setSelectedMode] = useState<GameMode>(GameMode.VS_AI);
@@ -66,6 +71,11 @@ export default function FootballGame() {
     );
 
     const unsubscribe = engineRef.current.subscribe((state) => {
+      // Check if AI outcome changed and show overlay
+      if (state.lastAIOutcome && state.lastAIOutcome !== gameState.lastAIOutcome) {
+        showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value);
+      }
+
       setGameState({
         screen: state.screen,
         isPlaying: state.isPlaying,
@@ -86,6 +96,7 @@ export default function FootballGame() {
         mode: state.mode,
         matchDuration: state.matchDuration,
         aiDifficulty: state.aiDifficulty,
+        lastAIOutcome: state.lastAIOutcome,
       });
     });
 
@@ -109,10 +120,11 @@ export default function FootballGame() {
       if (!gameState.stopwatchRunning) {
         engineRef.current.playerStart();
       } else {
-        const value = gameState.stopwatchValue;
+        // Round to 2 decimals
+        const value = Math.round(gameState.stopwatchValue * 100) / 100;
         engineRef.current.foulRetryStop();
-        const isGoal = Math.floor(value * 100) % 10 === 5;
-        if (isGoal) {
+        const lastDigit = Math.floor(value) % 10;
+        if (lastDigit === 5) {
           showOutcome('goal', value);
         } else {
           showOutcome('turnover', value);
@@ -127,7 +139,8 @@ export default function FootballGame() {
       engineRef.current.playerStart();
     } else {
       // STOP — evaluate
-      const value = gameState.stopwatchValue;
+      // Round to 2 decimals
+      const value = Math.round(gameState.stopwatchValue * 100) / 100;
       const wholeValue = Math.floor(value);
 
       if (value === 0) {
@@ -136,7 +149,7 @@ export default function FootballGame() {
       } else if (value <= 0.01 || value >= 99.99) {
         showOutcome('penalty', value);
         engineRef.current.playerStop();
-      } else if (wholeValue > 0 && wholeValue % 5 === 0) {
+      } else if (wholeValue > 0 && wholeValue % 5 === 0 && (value - wholeValue) < 0.02) {
         showOutcome('foul', value);
         engineRef.current.playerStop();
         setIsFoulRetry(true);
@@ -345,6 +358,24 @@ export default function FootballGame() {
                   <div className={styles.scoreNum}>{gameState.player2Score}</div>
                 </div>
               </div>
+
+              {/* AI last action log (VS AI mode) */}
+              {gameState.mode === GameMode.VS_AI && gameState.lastAIOutcome && (
+                <div className={styles.aiLog}>
+                  {gameState.lastAIOutcome.outcome === 'goal' && (
+                    <span>AI stopped at {formatStopwatch(gameState.lastAIOutcome.value)} — ⚽ GOAL!</span>
+                  )}
+                  {gameState.lastAIOutcome.outcome === 'penalty' && (
+                    <span>AI stopped at {formatStopwatch(gameState.lastAIOutcome.value)} — 🥅 PENALTY!</span>
+                  )}
+                  {gameState.lastAIOutcome.outcome === 'foul' && (
+                    <span>AI stopped at {formatStopwatch(gameState.lastAIOutcome.value)} — ⚠️ FOUL!</span>
+                  )}
+                  {gameState.lastAIOutcome.outcome === 'turnover' && (
+                    <span>AI stopped at {formatStopwatch(gameState.lastAIOutcome.value)} — 🔄 TURNOVER</span>
+                  )}
+                </div>
+              )}
 
               {/* Turn indicator */}
               <div className={`${styles.turnIndicator} ${isPlayerTurn ? styles.turnPlayer : styles.turnAI}`}>

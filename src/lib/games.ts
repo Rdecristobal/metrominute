@@ -13,7 +13,7 @@ export const GAMES: Game[] = [
   },
   {
     id: 'futbol',
-    title: 'Football Zero',
+    title: 'Football Stop',
     icon: '⚽',
     description: 'Stop at 00.00 = GOAL. Precision timing game.',
     href: '/futbol',
