@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import GameBoard from "@/components/game/GameBoard";
 import { BackToHub } from "@/components/game/BackToHub";
+import { RetroBackground } from "@/components/home";
 
 function GameContent() {
   const searchParams = useSearchParams();
@@ -11,10 +12,14 @@ function GameContent() {
   const mode = (modeParam as 'classic' | 'normal' | null);
 
   return (
-    <>
-      <BackToHub />
-      <GameBoard mode={mode || undefined} />
-    </>
+    <main className="min-h-screen relative">
+      <RetroBackground />
+
+      <div className="relative z-10 min-h-screen flex flex-col">
+        <BackToHub />
+        <GameBoard mode={mode || undefined} />
+      </div>
+    </main>
   );
 }
 

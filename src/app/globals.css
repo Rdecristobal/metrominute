@@ -66,6 +66,44 @@
    METRO MINUTE - RETRO THEME
    ============================================ */
 
+/* Mobile optimization - hide scrollbars and prevent bounce */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but keep functionality */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--retro-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--retro-surface);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--retro-muted);
+}
+
+/* Prevent text selection for app-like feel */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Touch action optimization */
+* {
+  touch-action: manipulation;
+}
+
 /* Variables Retro */
 :root {
   --retro-black: #000000;
