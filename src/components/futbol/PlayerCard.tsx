@@ -38,12 +38,12 @@ export default function PlayerCard({
 
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>⚽ Goles</div>
+          <div className={styles.statLabel}>⚽ GOALS</div>
           <div className={`${styles.statValue} ${styles.goals}`}>{perfectGoals}</div>
         </div>
 
         <div className={styles.statItem}>
-          <div className={styles.statLabel}>⚠️ Faltas</div>
+          <div className={styles.statLabel}>⚠️ FOULS</div>
           <div className={`${styles.statValue} ${styles.fouls}`}>{fouls}</div>
         </div>
 

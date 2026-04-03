@@ -1,0 +1,123 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: celebrate 1.5s ease-in-out forwards;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1);
+  }
+  80% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.pixelPlayer {
+  image-rendering: pixelated;
+}
+
+.playerSvg {
+  animation: jump 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes jump {
+  0% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  100% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+}
+
+.goalText {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #00FF7F;
+  text-shadow: 0 0 20px rgba(0, 255, 127, 0.5),
+               0 0 40px rgba(0, 255, 127, 0.3),
+               4px 4px 0px #005533;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 8px;
+  animation: pulseText 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes pulseText {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+
+.goalSubtext {
+  font-size: 3rem;
+  animation: spinBall 0.5s linear infinite;
+}
+
+@keyframes spinBall {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.particles {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  animation: particleFly 1s ease-out forwards;
+  image-rendering: pixelated;
+}
+
+@keyframes particleFly {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(0);
+    opacity: 0;
+  }
+}

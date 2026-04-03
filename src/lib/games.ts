@@ -13,9 +13,9 @@ export const GAMES: Game[] = [
   },
   {
     id: 'futbol',
-    title: 'Fútbol Cronómetro',
+    title: 'Football Zero',
     icon: '⚽',
-    description: 'Para en 00.00 = GOL. Juego de precisión y tiempo.',
+    description: 'Stop at 00.00 = GOAL. Precision timing game.',
     href: '/futbol',
     available: true,
     accentColor: 'var(--neon-green)',
