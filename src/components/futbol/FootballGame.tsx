@@ -68,6 +68,10 @@ export default function FootballGame() {
   // Foul retry state
   const [isFoulRetry, setIsFoulRetry] = useState(false);
 
+  // Refs to track previous outcomes for proper comparison
+  const lastAIOutcomeRef = useRef<typeof gameState.lastAIOutcome>(null);
+  const lastPlayerOutcomeRef = useRef<typeof gameState.lastPlayerOutcome>(null);
+
   useEffect(() => {
     engineRef.current = new FootballEngine(
       selectedMode,
@@ -78,17 +82,19 @@ export default function FootballGame() {
 
     const unsubscribe = engineRef.current.subscribe((state) => {
       // Check if AI outcome changed and show overlay
-      if (state.lastAIOutcome && state.lastAIOutcome !== gameState.lastAIOutcome) {
+      if (state.lastAIOutcome && state.lastAIOutcome !== lastAIOutcomeRef.current) {
         showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value, 'ai');
+        lastAIOutcomeRef.current = state.lastAIOutcome;
       }
 
       // Check if player outcome changed and show overlay
-      if (state.lastPlayerOutcome && state.lastPlayerOutcome !== gameState.lastPlayerOutcome) {
+      if (state.lastPlayerOutcome && state.lastPlayerOutcome !== lastPlayerOutcomeRef.current) {
         showOutcome(state.lastPlayerOutcome.outcome, state.lastPlayerOutcome.value, 'player');
         // Set foul retry flag if outcome is foul
         if (state.lastPlayerOutcome.outcome === 'foul') {
           setIsFoulRetry(true);
         }
+        lastPlayerOutcomeRef.current = state.lastPlayerOutcome;
       }
 
       setGameState({
@@ -119,6 +125,9 @@ export default function FootballGame() {
     return () => {
       unsubscribe();
       engineRef.current?.resetGame();
+      // Reset refs when cleaning up
+      lastAIOutcomeRef.current = null;
+      lastPlayerOutcomeRef.current = null;
     };
   }, [selectedMode, selectedDuration, selectedDifficulty]);
 
@@ -165,6 +174,11 @@ export default function FootballGame() {
     if (selectedMode === GameMode.VS_AI) {
       engineRef.current?.setAIDifficulty(selectedDifficulty);
     }
+
+    // Reset outcome refs when starting a new match
+    lastAIOutcomeRef.current = null;
+    lastPlayerOutcomeRef.current = null;
+
     engineRef.current?.startMatch();
 
     setCountdown(3);
