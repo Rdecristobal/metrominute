@@ -1,0 +1,74 @@
+.scoreBoard {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 15px;
+  padding: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.playerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.playerName {
+  font-size: 0.9rem;
+  color: #9CA3AF;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.playerScore {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.playerFouls {
+  font-size: 0.8rem;
+  color: #F59E0B;
+  margin-top: 5px;
+}
+
+.vsSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.vsText {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #6B7280;
+  letter-spacing: 2px;
+}
+
+.matchTime {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #EF4444;
+  margin-top: 5px;
+  font-family: 'Courier New', monospace;
+}
+
+.extraTimeBadge {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

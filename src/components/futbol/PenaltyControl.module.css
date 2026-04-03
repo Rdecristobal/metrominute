@@ -1,0 +1,171 @@
+.penaltyControl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
+  width: 100%;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #F59E0B;
+  margin-bottom: 20px;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+}
+
+.description {
+  font-size: 1.1rem;
+  color: #9CA3AF;
+  margin-bottom: 30px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.stoppedValue {
+  font-size: 4rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  color: #F59E0B;
+  padding: 20px 40px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 15px;
+  margin-bottom: 30px;
+  border: 3px solid #F59E0B;
+}
+
+.stopwatchButton {
+  font-size: 1.3rem;
+  font-weight: bold;
+  padding: 20px 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  min-width: 220px;
+  margin-bottom: 30px;
+}
+
+.stopwatchButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+}
+
+.stopwatchButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.stopwatchButton.running {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.predictions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.predictionLabel {
+  font-size: 1rem;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.predictionButtons {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+  justify-content: center;
+}
+
+.predictionButton {
+  flex: 1;
+  padding: 20px 30px;
+  border-radius: 12px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border: 3px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  min-width: 120px;
+}
+
+.predictionButton.even {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+.predictionButton.odd {
+  background: rgba(236, 72, 153, 0.1);
+  border-color: #EC4899;
+  color: #EC4899;
+}
+
+.predictionButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.predictionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.resultMessage {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 20px;
+  text-align: center;
+  padding: 15px 30px;
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.resultMessage.goal {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10B981;
+  border: 2px solid #10B981;
+}
+
+.resultMessage.miss {
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border: 2px solid #EF4444;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -11,6 +11,16 @@ export const GAMES: Game[] = [
     accentColor: 'var(--neon-cyan)',
     tags: ['reflex', 'casual'],
   },
+  {
+    id: 'futbol',
+    title: 'Fútbol Cronómetro',
+    icon: '⚽',
+    description: 'Para en 00.00 = GOL. Juego de precisión y tiempo.',
+    href: '/futbol',
+    available: true,
+    accentColor: 'var(--neon-green)',
+    tags: ['precision', 'sports'],
+  },
 ];
 
 export function getGameById(id: string): Game | undefined {

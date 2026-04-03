@@ -102,7 +102,8 @@ User selecciona Classic → setSelectedMode('classic')
   → startGame() [rama classic]
     → engine.startGame() → startClassicMode()
     → setScreen('game')
-    → setTimeout(100ms):
+    → useEffect([screen]) detecta screen='game'
+    → requestAnimationFrame() × 2 (double rAF):
       → startGameLoop() → setInterval(tick, 1000)
       → setupMovementAndDecoys() → phase 0: sin movimiento, sin señuelos
       → spawnInitialTargets() → 1 target normal
@@ -117,7 +118,8 @@ User selecciona Normal → setSelectedMode('normal')
     → showCountdown(0) → cuenta atrás 3-2-1-GO
     → startChallenge(0) → engine.startChallenge(0)
     → setScreen('game')
-    → setTimeout(50ms):
+    → useEffect([screen]) detecta screen='game'
+    → requestAnimationFrame() × 2 (double rAF):
       → startGameLoop()
       → setupMovementAndDecoys()
       → spawnInitialTargets()
@@ -144,56 +146,144 @@ Targets se almacenan en estado React (`targets` array). Se renderizan via `Anima
 ## BUG: Modo Classic — No se ven burbujas
 
 ### Descripción
-El modo clásico inicia correctamente (timer arranca, UI se muestra) pero no aparece ninguna burbuja.
+El modo clásico inicia correctamente (timer arranca, UI se muestra) pero no aparece ninguna burbuja. Confirmado en producción tras el commit 57b89a8 (doble rAF + guards de dimensiones).
 
-### Análisis
+### Causa raíz identificada (2026-03-31)
 
-Tras revisar todo el código fuente, el flujo de classic mode debería funcionar:
-1. `startClassicMode()` → isPlaying=true, targets.clear(), notify()
-2. `setScreen('game')` → re-render con gameAreaRef disponible
-3. `spawnInitialTargets()` → llama `engine.spawnTarget(w, h)` → crea target → notify()
-4. Subscribe callback → `setTargets(engine.getTargets())` → React re-renderiza targets
+**`isTransitioningRef.current` se queda atascado en `true` después de jugar en modo Normal.**
 
-**Posibles causas (por orden de probabilidad):**
+El subscribe callback del engine tiene este guard:
 
-#### 1. `gameAreaRef.current` con dimensiones 0 (ALTA probabilidad)
-`spawnInitialTargets()` usa `gameArea.offsetWidth` y `gameArea.offsetHeight`. Si el gameArea no tiene layout completo en el momento del setTimeout(100ms), las dimensiones podrían ser 0.
-- `spawnTarget` calcularía `maxX = 0 - 45 = -45`, `maxY = 0 - 45 = -45`
-- `x = Math.random() * -45` → valor negativo
-- `y = 140 + Math.random() * (-45 - 140)` → valor NaN o negativo
-- El target se renderizaría fuera de la pantalla
+```typescript
+// GameBoard.tsx — dentro de useEffect([selectedMode])
+const unsubscribe = engineRef.current.subscribe((state) => {
+  setGameState({...});
+  if (screenRef.current === 'game' && !isTransitioningRef.current) {  // ← ESTE GUARD
+    setTargets(engineRef.current!.getTargets());
+  }
+});
+```
 
-**Verificación:** FullStack debe añadir `console.log('Game area:', gameArea.offsetWidth, gameArea.offsetHeight)` en `spawnInitialTargets()`.
+Si `isTransitioningRef.current === true`, **los targets se crean en el engine pero NUNCA se pasan a React state** → nunca se renderizan.
 
-#### 2. `screenRef.current` no sincronizado (MEDIA probabilidad)
-Si el subscribe callback se ejecuta antes de que el useEffect de sincronización actualice `screenRef` a 'game', entonces `setTargets` no se llama y los targets no se actualizan en React.
+### Rastreo completo del bug
 
-**Verificación:** Console.log `screenRef.current` en el subscribe callback y en `spawnInitialTargets`.
+#### Dónde se setea `isTransitioningRef.current = true`
 
-#### 3. React Strict Mode double-mount (solo development)
-En desarrollo, React monta→desmonta→monta. El primer setTimeout puede interferir con el segundo engine.
+| Ubicación | Cuándo |
+|---|---|
+| `startGameLoop()` → interval callback, `result.challengeEnded` | Al terminar un challenge en modo Normal |
+| `startGameLoop()` → interval callback, cambio de fase Classic | Al cambiar de fase en Classic (temporal, se resetea en el mismo bloque) |
 
-**Verificación:** Probar en producción (build + start).
+#### Dónde se resetea a `false`
 
-#### 4. Target renderizado pero invisible (BAJA probabilidad)
-CSS z-index, overflow hidden, o conflicto con el header overlay.
+| Ubicación | Cuándo |
+|---|---|
+| `startChallenge()` | Solo para modo Normal (al iniciar cada challenge) |
+| Cambio de fase Classic | Dentro del mismo bloque síncrono (no problema) |
 
-**Verificación:** Inspeccionar DOM en DevTools para ver si el target existe pero está oculto.
+#### Dónde **NO** se resetea (el bug)
 
-### Solución propuesta
+| Función | Problema |
+|---|---|
+| `startGame()` rama Classic | **No resetea** `isTransitioningRef` |
+| `goHome()` | **No resetea** `isTransitioningRef` |
+| `handleGameOver()` → `setScreen('gameover')` | **No resetea** `isTransitioningRef` |
 
-1. **FullStack:** Añadir console.logs diagnósticos en `spawnInitialTargets()`:
-   - `gameAreaRef.current` existe?
-   - `gameArea.offsetWidth`, `gameArea.offsetHeight`
-   - Resultado de `engine.spawnTarget()`
-   - `screenRef.current` valor
-   - `engine.getTargets()` después del spawn
+#### Flujo de reproducción
 
-2. **FullStack:** Si las dimensiones son 0, aumentar el timeout de 100ms a 200-300ms o usar `requestAnimationFrame` para asegurar que el layout está completo.
+1. Usuario juega modo Normal
+2. Un challenge termina → `isTransitioningRef.current = true`
+3. Se muestra pantalla de transición o game over
+4. `isTransitioningRef.current` **permanece `true`** (nunca se resetea al salir)
+5. Usuario selecciona Classic y pulsa PLAY
+6. `startGame()` → `startClassicMode()` → `isPlaying=true` → `setScreen('game')`
+7. `useEffect([screen])` → doble rAF → `spawnInitialTargets()`
+8. `engine.spawnTarget()` **funciona** → target existe en el engine
+9. `notify()` → subscribe callback → `isTransitioningRef.current === true` → **`setTargets` SKIPPEADO** ❌
+10. React state `targets` sigue vacío → **no se renderiza nada**
 
-3. **FullStack:** Alternativa más robusta: usar `useEffect` con dependencia en `screen` para spawnear targets cuando la pantalla cambia a 'game', en vez de setTimeout.
+#### Por qué el commit 57b89a8 no lo arregló
 
-4. **FullStack:** Añadir guard en `spawnTarget`: si `gameWidth < TARGET_SIZE * 2` o `gameHeight < HEADER_HEIGHT + TARGET_SIZE`, no spawnear y loggear warning.
+El commit añadió:
+- Doble `requestAnimationFrame` para esperar layout → **no relevante**, el problema no es de layout
+- Guards de dimensiones en `spawnTarget`/`spawnDecoy` → **no relevante**, el target SÍ se crea en el engine
+
+El target se crea correctamente en el engine, pero **nunca llega al estado de React** porque el subscribe callback lo filtra.
+
+### Bug secundario: `prevPhaseRef` no se resetea
+
+Al hacer RETRY en Classic, `prevPhaseRef.current` mantiene el valor de la partida anterior (ej: `3`). `startClassicMode()` resetea `currentPhase` a `0`, pero en el primer tick del game loop:
+
+```typescript
+if (selectedMode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
+  // 0 !== 3 → TRUE → se dispara un cambio de fase falso
+  isTransitioningRef.current = true;
+  engineRef.current?.clearTargets();
+  setTargets([]);
+  // ...
+  isTransitioningRef.current = false;
+  engineRef.current?.spawnTarget(...);
+  prevPhaseRef.current = 0;
+}
+```
+
+Resultado: las burbujas desaparecen y reaparecen en el primer tick (flicker visual). No impide jugar, pero es un defecto.
+
+### Solución exacta
+
+**Archivo:** `src/components/game/GameBoard.tsx`
+
+**Fix 1 — Resetear `isTransitioningRef` en `startGame()` (rama Classic):**
+
+```typescript
+const startGame = () => {
+    if (selectedMode === 'normal') {
+      showCountdown(0);
+    } else {
+      isTransitioningRef.current = false;  // ← AÑADIR
+      prevPhaseRef.current = 0;             // ← AÑADIR
+      engineRef.current?.startGame();
+      setScreen('game');
+    }
+  };
+```
+
+**Fix 2 — Resetear refs en `goHome()`:**
+
+```typescript
+const goHome = () => {
+    cleanup();
+    isTransitioningRef.current = false;  // ← AÑADIR
+    prevPhaseRef.current = 0;             // ← AÑADIR
+    engineRef.current?.resetGame();
+    setScreen('home');
+  };
+```
+
+**Fix 3 — Resetear refs en `handleGameOver()` (prevención defensiva):**
+
+```typescript
+const handleGameOver = () => {
+    isTransitioningRef.current = false;  // ← AÑADIR
+    setScreen('gameover');
+  };
+```
+
+### Por qué funciona
+
+- `startGame()` es el punto de entrada para Classic. Resetear `isTransitioningRef` aquí garantiza que el subscribe callback no filtre los targets.
+- `goHome()` es el punto de salida. Resetear aquí limpia el estado para cualquier modo futuro.
+- `handleGameOver()` es prevención defensiva: si un game over deja la ref en `true`, se limpia antes de que el usuario elija otra acción.
+
+### Análisis descartado
+
+| Causa descartada | Razón |
+|---|---|
+| Dimensiones 0 del gameArea | Doble rAF (commit 57b89a8) garantiza layout. Además, el guard en `spawnTarget` devolvería `null` y se vería el `console.warn` en consola. |
+| `screenRef.current` no sincronizado | El useEffect de sincronización (`screenRef.current = screen`) se declara ANTES del useEffect de spawn. React ejecuta efectos en orden de declaración. Siempre está sincronizado cuando el spawn ejecuta. |
+| engineRef condición de carrera | El useEffect([selectedMode]) se ejecuta antes del useEffect([screen]) (declarado primero). Además, `selectedMode` cambia en un render distinto a `screen`. No hay solapamiento. |
+| Target renderizado pero invisible | El componente Target usa `position: absolute` con `left/top` inline. No hay `display: none` condicional. Z-index solo diferencia decoys (100) de normales (1). Si existiera en DOM, sería visible. |
 
 ---
 
