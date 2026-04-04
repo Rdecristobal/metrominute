@@ -363,6 +363,11 @@
   animation: celebrate 0.6s ease-in-out infinite;
 }
 
+.refereePlayer {
+  margin-bottom: 20px;
+  animation: refereeMotion 1s ease-in-out infinite;
+}
+
 .pixelPlayerSvg {
   filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
   shape-rendering: crispEdges;
@@ -431,6 +436,15 @@
   }
   50% {
     transform: translateY(-25px);
+  }
+}
+
+@keyframes refereeMotion {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 

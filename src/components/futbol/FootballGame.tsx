@@ -303,12 +303,118 @@ export default function FootballGame() {
             )}
             {outcomeOverlay.type === 'penalty' && (
               <>
+                <div className={styles.refereePlayer}>
+                  {/* Pixel art referee pointing penalty - 16-bit style */}
+                  <svg
+                    width="200"
+                    height="280"
+                    viewBox="0 0 200 280"
+                    fill="none"
+                    className={styles.pixelPlayerSvg}
+                  >
+                    {/* Head */}
+                    <rect x="75" y="15" width="50" height="50" fill="#FFD93D" />
+                    {/* Hair */}
+                    <rect x="70" y="10" width="60" height="15" fill="#2C2C2C" />
+                    <rect x="65" y="20" width="10" height="10" fill="#2C2C2C" />
+                    <rect x="125" y="20" width="10" height="10" fill="#2C2C2C" />
+                    {/* Eyes - serious expression */}
+                    <rect x="82" y="35" width="12" height="8" fill="#000" />
+                    <rect x="106" y="35" width="12" height="8" fill="#000" />
+                    {/* Mouth - serious line */}
+                    <rect x="92" y="55" width="16" height="4" fill="#000" />
+                    {/* Neck */}
+                    <rect x="88" y="65" width="24" height="15" fill="#FFD93D" />
+                    {/* Torso - referee shirt black with white stripes */}
+                    <rect x="55" y="80" width="90" height="80" fill="#1A1A1A" />
+                    {/* White vertical stripes */}
+                    <rect x="85" y="80" width="10" height="80" fill="#FFF" />
+                    <rect x="105" y="80" width="10" height="80" fill="#FFF" />
+                    {/* Arms */}
+                    <rect x="45" y="85" width="15" height="70" fill="#1A1A1A" />
+                    <rect x="140" y="85" width="15" height="70" fill="#1A1A1A" />
+                    {/* Left arm pointing penalty (up) */}
+                    <rect x="30" y="40" width="20" height="50" fill="#FFD93D" />
+                    <rect x="25" y="25" width="30" height="20" fill="#FFD93D" />
+                    <rect x="20" y="15" width="20" height="15" fill="#FFD93D" />
+                    {/* Right arm holding whistle down */}
+                    <rect x="145" y="150" width="35" height="15" fill="#FFD93D" />
+                    <rect x="170" y="160" width="20" height="15" fill="#FFD93D" />
+                    {/* Whistle */}
+                    <rect x="175" y="175" width="15" height="15" fill="#888" />
+                    <rect x="178" y="190" width="9" height="10" fill="#888" />
+                    {/* Shorts - black */}
+                    <rect x="60" y="160" width="80" height="45" fill="#1A1A1A" />
+                    <rect x="55" y="165" width="10" height="40" fill="#1A1A1A" />
+                    <rect x="135" y="165" width="10" height="40" fill="#1A1A1A" />
+                    {/* Legs */}
+                    <rect x="60" y="205" width="30" height="60" fill="#FFD93D" />
+                    <rect x="110" y="205" width="30" height="60" fill="#FFD93D" />
+                    {/* Boots - black */}
+                    <rect x="55" y="255" width="40" height="25" fill="#1A1A1A" />
+                    <rect x="105" y="255" width="40" height="25" fill="#1A1A1A" />
+                  </svg>
+                </div>
                 <div className={styles.penaltyText}>PENALTI</div>
                 <div className={styles.penaltySubtext}>{formatStopwatch(outcomeOverlay.value)}</div>
               </>
             )}
             {outcomeOverlay.type === 'foul' && (
               <>
+                <div className={styles.refereePlayer}>
+                  {/* Pixel art referee showing yellow card - 16-bit style */}
+                  <svg
+                    width="200"
+                    height="280"
+                    viewBox="0 0 200 280"
+                    fill="none"
+                    className={styles.pixelPlayerSvg}
+                  >
+                    {/* Head */}
+                    <rect x="75" y="15" width="50" height="50" fill="#FFD93D" />
+                    {/* Hair */}
+                    <rect x="70" y="10" width="60" height="15" fill="#2C2C2C" />
+                    <rect x="65" y="20" width="10" height="10" fill="#2C2C2C" />
+                    <rect x="125" y="20" width="10" height="10" fill="#2C2C2C" />
+                    {/* Eyes - stern expression */}
+                    <rect x="82" y="35" width="12" height="8" fill="#000" />
+                    <rect x="106" y="35" width="12" height="8" fill="#000" />
+                    {/* Mouth - firm frown */}
+                    <rect x="90" y="55" width="20" height="6" fill="#000" />
+                    {/* Neck */}
+                    <rect x="88" y="65" width="24" height="15" fill="#FFD93D" />
+                    {/* Torso - referee shirt black with white stripes */}
+                    <rect x="55" y="80" width="90" height="80" fill="#1A1A1A" />
+                    {/* White vertical stripes */}
+                    <rect x="85" y="80" width="10" height="80" fill="#FFF" />
+                    <rect x="105" y="80" width="10" height="80" fill="#FFF" />
+                    {/* Arms */}
+                    <rect x="45" y="85" width="15" height="70" fill="#1A1A1A" />
+                    <rect x="140" y="85" width="15" height="70" fill="#1A1A1A" />
+                    {/* Left arm down */}
+                    <rect x="25" y="150" width="25" height="15" fill="#FFD93D" />
+                    <rect x="20" y="160" width="15" height="20" fill="#FFD93D" />
+                    {/* Right arm up showing yellow card */}
+                    <rect x="145" y="60" width="30" height="15" fill="#FFD93D" />
+                    <rect x="165" y="45" width="15" height="20" fill="#FFD93D" />
+                    {/* Yellow card */}
+                    <rect x="158" y="25" width="25" height="25" fill="#FFD700" />
+                    <rect x="160" y="27" width="21" height="21" fill="#FFD700" />
+                    {/* Card inner detail */}
+                    <rect x="162" y="32" width="17" height="3" fill="#FFF" />
+                    <rect x="162" y="37" width="12" height="3" fill="#FFF" />
+                    {/* Shorts - black */}
+                    <rect x="60" y="160" width="80" height="45" fill="#1A1A1A" />
+                    <rect x="55" y="165" width="10" height="40" fill="#1A1A1A" />
+                    <rect x="135" y="165" width="10" height="40" fill="#1A1A1A" />
+                    {/* Legs */}
+                    <rect x="60" y="205" width="30" height="60" fill="#FFD93D" />
+                    <rect x="110" y="205" width="30" height="60" fill="#FFD93D" />
+                    {/* Boots - black */}
+                    <rect x="55" y="255" width="40" height="25" fill="#1A1A1A" />
+                    <rect x="105" y="255" width="40" height="25" fill="#1A1A1A" />
+                  </svg>
+                </div>
                 <div className={styles.foulText}>FALTA</div>
                 <div className={styles.foulSubtext}>Reintenta — ¡Párate en X5!</div>
               </>
