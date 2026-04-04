@@ -175,12 +175,8 @@ export class FootballEngine {
         if (currentPlayer === 'player1') this.state.player1Fouls++;
         else this.state.player2Fouls++;
         this.state.screen = GameScreen.PENALTY_RESULT;
-        // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
-        if (this.state.mode === GameMode.VS_PLAYER) {
-          // Keep the value where it stopped
-        } else {
-          this.state.stopwatchValue = 0;
-        }
+        // Keep stopwatch value where it stopped - don't reset
+        // In VS_PLAYER mode, each player sees where opponent left off
         // Save player outcome for UI to display
         this.state.lastPlayerOutcome = {
           outcome: scoring.outcome,
@@ -194,8 +190,7 @@ export class FootballEngine {
         this.state.foulsConceded++;
         if (currentPlayer === 'player1') this.state.player1Fouls++;
         else this.state.player2Fouls++;
-        // Foul = retry for same player, reset stopwatch but don't change turn
-        this.state.stopwatchValue = 0;
+        // Foul = retry for same player, stopwatch continues without reset
         // Save player outcome for UI to display
         this.state.lastPlayerOutcome = {
           outcome: scoring.outcome,
@@ -274,12 +269,8 @@ export class FootballEngine {
       }
     }
 
-    // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
-    if (this.state.mode === GameMode.VS_PLAYER) {
-      // Keep the value where it stopped
-    } else {
-      this.state.stopwatchValue = 0;
-    }
+    // Keep stopwatch value where it stopped - don't reset
+    // In VS_PLAYER mode, each player sees where opponent left off
     this.switchTurn();
     this.notify();
   }
@@ -365,12 +356,8 @@ export class FootballEngine {
     }
 
     this.state.screen = GameScreen.GAME;
-    // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
-    if (this.state.mode === GameMode.VS_PLAYER) {
-      // Keep the value where it stopped
-    } else {
-      this.state.stopwatchValue = 0;
-    }
+    // Keep stopwatch value where it stopped - don't reset
+    // In VS_PLAYER mode, each player sees where opponent left off
     this.switchTurn();
     this.notify();
   }
