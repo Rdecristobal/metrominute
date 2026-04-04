@@ -187,7 +187,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
     if (result.success && target) {
       const isGolden = target.type === 'golden';
       const isDecoy = target.type === 'decoy';
-      const color = isGolden ? '#FFD700' : (isDecoy ? '#10B981' : '#00D4FF');
+      const color = isGolden ? '#FFD700' : (isDecoy ? '#4ADE80' : '#00D4FF');
 
       createExplosion(clientX, clientY, color, isGolden ? 20 : 12);
       showFloatingScore(clientX, clientY, result.points, isGolden, isDecoy);
@@ -519,10 +519,10 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   };
 
   const renderHomeScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+    <div className="flex flex-col items-center justify-center h-full p-6 sm:p-8 text-center">
       {/* Sound toggle button */}
       <button
-        className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded-full text-sm transition-colors z-20"
+        className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm transition-colors z-20"
         onClick={() => {
           const newState = !gameState.soundEnabled;
           engineRef.current?.toggleSound(newState);
@@ -532,14 +532,14 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
       </button>
 
       {/* Logo/Title */}
-      <h1 className="text-5xl md:text-6xl font-bold text-[#00D4FF] mb-4 tracking-tight leading-tight">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[#00D4FF] mb-4 tracking-tight leading-tight">
         🫧 Bubbles
       </h1>
 
       {/* Mode selector */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-3 sm:gap-4 mb-4">
         <button
-          className={`font-bold py-3 px-8 rounded-lg text-lg transition-all ${
+          className={`font-bold py-2 sm:py-3 px-4 sm:px-8 rounded-lg text-base sm:text-lg transition-all ${
             selectedMode === 'normal'
               ? 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] text-[#1A1A2E] shadow-lg'
               : 'bg-white/10 text-white hover:bg-white/20'
@@ -549,7 +549,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
           🎯 Normal
         </button>
         <button
-          className={`font-bold py-3 px-8 rounded-lg text-lg transition-all ${
+          className={`font-bold py-2 sm:py-3 px-4 sm:px-8 rounded-lg text-base sm:text-lg transition-all ${
             selectedMode === 'classic'
               ? 'bg-gradient-to-r from-[#00D4FF] to-[#0099CC] text-[#1A1A2E] shadow-lg'
               : 'bg-white/10 text-white hover:bg-white/20'
@@ -561,26 +561,26 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
       </div>
 
       {/* Mode description */}
-      <p className="text-xl text-white/60 mb-8">
+      <p className="text-base sm:text-xl text-white/60 mb-6 sm:mb-8">
         {selectedMode === 'classic' ? '60 seconds of free play' : '5 challenges: Reach the score goal!'}
       </p>
 
       {/* PLAY button */}
       <button
-        className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-5 px-20 rounded-xl text-2xl shadow-[0_4px_20px_rgba(236,72,153,0.4)] hover:shadow-[0_6px_25px_rgba(236,72,153,0.5)] hover:-translate-y-0.5 transition-all duration-200 mb-8"
+        className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-3 sm:py-5 px-12 sm:px-20 rounded-xl text-xl sm:text-2xl shadow-[0_4px_20px_rgba(236,72,153,0.4)] hover:shadow-[0_6px_25px_rgba(236,72,153,0.5)] hover:-translate-y-0.5 transition-all duration-200 mb-6 sm:mb-8"
         onClick={startGame}
       >
         PLAY
       </button>
 
       {/* High Score Display */}
-      <div className="text-xl text-white">
+      <div className="text-lg sm:text-xl text-white">
         High Score: <span className="text-yellow-400 font-bold">{gameState.highScore}</span>
       </div>
 
       {/* Leaderboard link */}
       <button
-        className="mt-8 text-white/40 hover:text-[#00D4FF] transition-colors text-sm"
+        className="mt-6 sm:mt-8 text-white/40 hover:text-[#00D4FF] transition-colors text-xs sm:text-sm"
         onClick={() => router.push('/leaderboard')}
       >
         🏆 View Leaderboard
@@ -600,7 +600,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
       {/* Phase indicator */}
       {showPhaseIndicator && (
-        <div className="absolute top-[140px] left-1/2 transform -translate-x-1/2 text-pink-500 font-bold text-sm uppercase tracking-widest z-20 animate-bounce"
+        <div className="absolute top-[105px] sm:top-[140px] left-1/2 transform -translate-x-1/2 text-pink-500 font-bold text-xs sm:text-sm uppercase tracking-widest z-20 animate-bounce"
              style={{ textShadow: '0 0 15px rgba(255, 20, 147, 0.8), 0 0 30px rgba(255, 20, 147, 0.4)' }}>
           {phaseIndicator}
         </div>
@@ -711,11 +711,11 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   );
 
   const renderResultScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full p-4 overflow-y-auto text-center">
-      <h2 className="text-4xl font-bold mb-4">⏰ Time!</h2>
-      <div className="text-7xl font-bold text-cyan-400 mb-4">{resultStats.score}</div>
+    <div className="flex flex-col items-center justify-center h-full p-3 sm:p-4 overflow-y-auto text-center">
+      <h2 className="text-3xl sm:text-4xl font-bold mb-4">⏰ Time!</h2>
+      <div className="text-5xl sm:text-7xl font-bold text-cyan-400 mb-4">{resultStats.score}</div>
 
-      <p className="text-xl mb-6 text-center">
+      <p className="text-base sm:text-xl mb-6 text-center">
         {resultStats.isNewRecord
           ? '🎉 ¡NUEVO RÉCORD PERSONAL! 🎉'
           : resultStats.delta === 0
@@ -724,10 +724,10 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
         }
       </p>
 
-      <div className="w-full max-w-md bg-cyan-900/20 rounded-lg p-4 border border-cyan-500/30 mb-6">
+      <div className="w-full max-w-md bg-cyan-900/20 rounded-lg p-3 sm:p-4 border border-cyan-500/30 mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="font-bold text-cyan-300">Personal Best</span>
-          <span className="text-2xl font-bold text-yellow-400">{gameState.highScore}</span>
+          <span className="text-xl sm:text-2xl font-bold text-yellow-400">{gameState.highScore}</span>
         </div>
         <div className={`text-center font-bold p-2 rounded ${
           resultStats.isNewRecord
@@ -745,35 +745,35 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6 flex-wrap justify-center">
-        <div className="bg-white/5 rounded-lg p-4 border border-white/10 min-w-[100px] text-center">
-          <div className="text-2xl mb-2">🎯</div>
-          <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Accuracy</div>
-          <div className="text-xl font-bold text-cyan-400">{resultStats.accuracy}%</div>
+      <div className="flex gap-2 sm:gap-4 mb-6 flex-wrap justify-center">
+        <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+          <div className="text-xl sm:text-2xl mb-2">🎯</div>
+          <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Accuracy</div>
+          <div className="text-lg sm:text-xl font-bold text-cyan-400">{resultStats.accuracy}%</div>
           <div className="w-full h-1 bg-white/10 rounded mt-2 overflow-hidden">
             <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded" style={{ width: `${resultStats.accuracy}%` }} />
           </div>
         </div>
-        <div className="bg-white/5 rounded-lg p-4 border border-white/10 min-w-[100px] text-center">
-          <div className="text-2xl mb-2">⚡</div>
-          <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Max Combo</div>
-          <div className="text-xl font-bold text-cyan-400">x{resultStats.maxCombo}</div>
+        <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+          <div className="text-xl sm:text-2xl mb-2">⚡</div>
+          <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Max Combo</div>
+          <div className="text-lg sm:text-xl font-bold text-cyan-400">x{resultStats.maxCombo}</div>
         </div>
-        <div className="bg-white/5 rounded-lg p-4 border border-white/10 min-w-[100px] text-center">
-          <div className="text-2xl mb-2">🔥</div>
-          <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Mejor Racha</div>
-          <div className="text-xl font-bold text-cyan-400">{resultStats.maxStreak} hits</div>
+        <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+          <div className="text-xl sm:text-2xl mb-2">🔥</div>
+          <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Mejor Racha</div>
+          <div className="text-lg sm:text-xl font-bold text-cyan-400">{resultStats.maxStreak} hits</div>
         </div>
       </div>
 
       <button
-        className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-4 px-16 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-xl border-2 border-white/30"
+        className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-3 sm:py-4 px-8 sm:px-16 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-lg sm:text-xl border-2 border-white/30"
         onClick={startGame}
       >
         RETRY
       </button>
       <button
-        className="mt-4 bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-12 rounded-lg transition-colors"
+        className="mt-4 bg-white/10 hover:bg-white/20 text-white font-bold py-2 sm:py-3 px-8 sm:px-12 rounded-lg transition-colors"
         onClick={goHome}
       >
         INICIO
@@ -786,31 +786,31 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
     const avgMaxCombo = (gameState.maxComboSum / CHALLENGES.length).toFixed(1);
 
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-        <h1 className="text-5xl font-bold mb-2 text-yellow-400">🏆 ¡VICTORIA!</h1>
-        <p className="text-lg text-yellow-400 mb-4">You completed all 5 challenges</p>
-        <div className="text-5xl font-bold text-yellow-400 mb-8">¡COMPLETADO!</div>
+      <div className="flex flex-col items-center justify-center h-full p-3 sm:p-4 text-center">
+        <h1 className="text-4xl sm:text-5xl font-bold mb-2 text-yellow-400">🏆 ¡VICTORIA!</h1>
+        <p className="text-base sm:text-lg text-yellow-400 mb-4">You completed all 5 challenges</p>
+        <div className="text-4xl sm:text-5xl font-bold text-yellow-400 mb-6 sm:mb-8">¡COMPLETADO!</div>
 
-        <div className="flex gap-4 mb-8 flex-wrap justify-center">
-          <div className="bg-white/5 rounded-lg p-4 border border-white/10 min-w-[100px] text-center">
-            <div className="text-2xl mb-2">🎯</div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Accuracy</div>
-            <div className="text-xl font-bold text-cyan-400">{avgAccuracy}%</div>
+        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8 flex-wrap justify-center">
+          <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+            <div className="text-xl sm:text-2xl mb-2">🎯</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Accuracy</div>
+            <div className="text-lg sm:text-xl font-bold text-cyan-400">{avgAccuracy}%</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-4 border border-white/10 min-w-[100px] text-center">
-            <div className="text-2xl mb-2">⚡</div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Max Combo</div>
-            <div className="text-xl font-bold text-cyan-400">x{avgMaxCombo}</div>
+          <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+            <div className="text-xl sm:text-2xl mb-2">⚡</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Max Combo</div>
+            <div className="text-lg sm:text-xl font-bold text-cyan-400">x{avgMaxCombo}</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-4 border border-white/10 min-w-[100px] text-center">
-            <div className="text-2xl mb-2">🔥</div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Mejor Racha</div>
-            <div className="text-xl font-bold text-cyan-400">{gameState.maxStreakMax}</div>
+          <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 min-w-[80px] sm:min-w-[100px] text-center">
+            <div className="text-xl sm:text-2xl mb-2">🔥</div>
+            <div className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider mb-1">Mejor Racha</div>
+            <div className="text-lg sm:text-xl font-bold text-cyan-400">{gameState.maxStreakMax}</div>
           </div>
         </div>
 
         <button
-          className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold py-3 px-12 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold py-2 sm:py-3 px-8 sm:px-12 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
           onClick={goHome}
         >
           INICIO
@@ -820,24 +820,24 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
   };
 
   const renderGameOverScreen = () => (
-    <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-      <h1 className="text-7xl font-black text-red-500 mb-4 animate-pulse" style={{ textShadow: '0 0 30px rgba(244, 67, 54, 0.8)' }}>
+    <div className="flex flex-col items-center justify-center h-full p-3 sm:p-4 text-center">
+      <h1 className="text-5xl sm:text-7xl font-black text-red-500 mb-4 animate-pulse" style={{ textShadow: '0 0 30px rgba(244, 67, 54, 0.8)' }}>
         GAME OVER
       </h1>
-      <p className="text-2xl mb-2">No completaste el reto</p>
-      <p className="text-xl text-gray-400 mb-8">
+      <p className="text-xl sm:text-2xl mb-2">No completaste el reto</p>
+      <p className="text-lg sm:text-xl text-gray-400 mb-6 sm:mb-8">
         Score: {gameState.score} / {gameState.currentChallengeScoreRequired}
       </p>
 
-      <div className="flex gap-4 justify-center w-full">
+      <div className="flex gap-3 sm:gap-4 justify-center w-full">
         <button
-          className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          className="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
           onClick={startGame}
         >
           RETRY
         </button>
         <button
-          className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+          className="bg-white/10 hover:bg-white/20 text-white font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-lg transition-colors"
           onClick={goHome}
         >
           INICIO
@@ -861,37 +861,37 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
       `}</style>
 
       <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-[#1A1A2E] via-[#0D0D1A] to-[#0D0D1A] min-h-screen relative overflow-hidden">
-        <div className={`relative w-full max-w-[420px] h-[calc(100vh-2rem)] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800 ${
+        <div className={`relative w-full max-w-[420px] h-[100dvh] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800 ${
           selectedMode === 'classic'
-            ? 'max-h-[80vh] md:max-h-[700px]'
+            ? 'max-h-[90vh] md:max-h-[700px]'
             : 'max-h-[95vh] md:h-[85vh] md:max-h-[850px]'
         }`}>
           {/* Header */}
           {(screen === 'game' || screen === 'countdown') && (
-            <div className="absolute top-0 left-0 right-0 p-5 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
-              <div className="flex gap-5">
+            <div className="absolute top-0 left-0 right-0 p-3 sm:p-5 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
+              <div className="flex gap-3 sm:gap-5">
                 <div className="text-center">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Time</div>
-                  <div className={`text-2xl font-bold ${gameState.timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Time</div>
+                  <div className={`text-lg sm:text-2xl font-bold ${gameState.timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                     {selectedMode === 'normal' && gameState.survivalTime > 0 ? gameState.survivalTime : gameState.timeLeft}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Score</div>
-                  <div className="text-2xl font-bold text-white">{gameState.score}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Score</div>
+                  <div className="text-lg sm:text-2xl font-bold text-white">{gameState.score}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Combo</div>
-                  <div className="text-2xl font-bold text-yellow-400">x{gameState.multiplier}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Combo</div>
+                  <div className="text-lg sm:text-2xl font-bold text-yellow-400">x{gameState.multiplier}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <div className="text-center">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">High Score</div>
-                  <div className="text-2xl font-bold text-white">{gameState.highScore}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">High Score</div>
+                  <div className="text-lg sm:text-2xl font-bold text-white">{gameState.highScore}</div>
                 </div>
                 <button
-                  className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded-full text-sm transition-colors"
+                  className="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm transition-colors"
                   onClick={() => {
                     const newState = !gameState.soundEnabled;
                     engineRef.current?.toggleSound(newState);
@@ -905,7 +905,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
           {/* Challenge progress bar (Normal mode) */}
           {selectedMode === 'normal' && (screen === 'game' || screen === 'countdown') && (
-            <div className="absolute top-[110px] left-1/2 transform -translate-x-1/2 w-[60%] h-[25px] bg-white/10 rounded-full overflow-hidden border-2 border-white/20 z-5">
+            <div className="absolute top-[80px] sm:top-[110px] left-1/2 transform -translate-x-1/2 w-[70%] sm:w-[60%] h-[20px] sm:h-[25px] bg-white/10 rounded-full overflow-hidden border-2 border-white/20 z-5">
               <div
                 className={`h-full transition-all duration-300 ${
                   gameState.survivalTime > 0
@@ -922,17 +922,17 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
                           ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
                           : 'bg-gradient-to-r from-cyan-400 to-blue-500'
                 }`}
-                style={{ 
+                style={{
                   width: `${
                     gameState.survivalTime > 0
                       ? Math.min(gameState.score, 100) // Survival: 0-100%
                       : Math.min((gameState.score / gameState.currentChallengeScoreRequired) * 100, 100)
-                  }%` 
+                  }%`
                 }}
               />
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-white whitespace-nowrap" style={{ textShadow: '0 0 5px rgba(0,0,0,0.8)' }}>
-                {gameState.survivalTime > 0 
-                  ? `${gameState.score} (Survival: ${gameState.survivalTime}s)` 
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-xs font-bold text-white whitespace-nowrap" style={{ textShadow: '0 0 5px rgba(0,0,0,0.8)' }}>
+                {gameState.survivalTime > 0
+                  ? `${gameState.score} (Survival: ${gameState.survivalTime}s)`
                   : `${gameState.score} / ${gameState.currentChallengeScoreRequired}`
                 }
               </div>
@@ -951,10 +951,10 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
           {/* Countdown overlay */}
           {screen === 'countdown' && (
             <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
-              <h2 className="text-4xl font-bold text-pink-500 mb-8" style={{ textShadow: '0 0 20px rgba(255, 20, 147, 0.8)' }}>
+              <h2 className="text-3xl sm:text-4xl font-bold text-pink-500 mb-6 sm:mb-8" style={{ textShadow: '0 0 20px rgba(255, 20, 147, 0.8)' }}>
                 {countdownTitle}
               </h2>
-              <div className={`text-9xl font-black ${countdown === 0 ? 'text-white' : 'text-white animate-pulse'}`} style={{ textShadow: '0 0 40px rgba(255, 255, 255, 0.8)' }}>
+              <div className={`text-7xl sm:text-9xl font-black ${countdown === 0 ? 'text-white' : 'text-white animate-pulse'}`} style={{ textShadow: '0 0 40px rgba(255, 255, 255, 0.8)' }}>
                 {countdown === 0 ? 'GO' : countdown}
               </div>
             </div>
