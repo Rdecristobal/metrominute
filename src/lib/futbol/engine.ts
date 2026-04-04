@@ -107,7 +107,7 @@ export class FootballEngine {
   }
 
   /**
-   * Player presses START — stopwatch begins counting up from 00.00
+   * Player presses START — stopwatch begins counting up from 00.00 (VS_AI) or continues from previous value (VS_PLAYER)
    */
   playerStart(): void {
     if (this.state.stopwatchRunning) return;
@@ -115,7 +115,13 @@ export class FootballEngine {
     // Don't allow start if it's AI's turn in VS_AI mode
     if (this.state.mode === GameMode.VS_AI && this.state.currentTurn === 'ai') return;
 
-    this.state.stopwatchValue = 0;
+    // In VS_PLAYER mode, keep the stopwatch value (continue from where it left off)
+    // In VS_AI mode, reset to 0 each turn
+    if (this.state.mode === GameMode.VS_AI) {
+      this.state.stopwatchValue = 0;
+    }
+    // In VS_PLAYER, stopwatchValue stays as is (accumulated)
+
     this.state.stopwatchRunning = true;
     this.runStopwatch();
     this.notify();
@@ -169,7 +175,12 @@ export class FootballEngine {
         if (currentPlayer === 'player1') this.state.player1Fouls++;
         else this.state.player2Fouls++;
         this.state.screen = GameScreen.PENALTY_RESULT;
-        this.state.stopwatchValue = 0;
+        // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
+        if (this.state.mode === GameMode.VS_PLAYER) {
+          // Keep the value where it stopped
+        } else {
+          this.state.stopwatchValue = 0;
+        }
         // Save player outcome for UI to display
         this.state.lastPlayerOutcome = {
           outcome: scoring.outcome,
@@ -239,7 +250,12 @@ export class FootballEngine {
       scored: isGoal
     };
 
-    this.state.stopwatchValue = 0;
+    // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
+    if (this.state.mode === GameMode.VS_PLAYER) {
+      // Keep the value where it stopped
+    } else {
+      this.state.stopwatchValue = 0;
+    }
     this.switchTurn();
     this.notify();
   }
@@ -275,7 +291,12 @@ export class FootballEngine {
     }
 
     this.state.screen = GameScreen.GAME;
-    this.state.stopwatchValue = 0;
+    // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
+    if (this.state.mode === GameMode.VS_PLAYER) {
+      // Keep the value where it stopped
+    } else {
+      this.state.stopwatchValue = 0;
+    }
     this.switchTurn();
     this.notify();
   }

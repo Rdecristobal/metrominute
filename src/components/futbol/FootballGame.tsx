@@ -303,16 +303,14 @@ export default function FootballGame() {
             )}
             {outcomeOverlay.type === 'penalty' && (
               <>
-                <div className={styles.penaltyIcon}>🥅</div>
-                <div className={styles.penaltyText}>PENALTY!</div>
+                <div className={styles.penaltyText}>PENALTI</div>
                 <div className={styles.penaltySubtext}>{formatStopwatch(outcomeOverlay.value)}</div>
               </>
             )}
             {outcomeOverlay.type === 'foul' && (
               <>
-                <div className={styles.foulIcon}>⚠️</div>
-                <div className={styles.foulText}>FOUL!</div>
-                <div className={styles.foulSubtext}>Retry — stop on X5!</div>
+                <div className={styles.foulText}>FALTA</div>
+                <div className={styles.foulSubtext}>Reintenta — ¡Párate en X5!</div>
               </>
             )}
             {outcomeOverlay.type === 'turnover' && (
