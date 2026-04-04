@@ -72,6 +72,14 @@ export default function FootballGame() {
   const lastAIOutcomeRef = useRef<typeof gameState.lastAIOutcome>(null);
   const lastPlayerOutcomeRef = useRef<typeof gameState.lastPlayerOutcome>(null);
 
+  // Outcome overlay display function
+  const showOutcome = useCallback((type: OutcomeType, value: number, scorer?: 'player' | 'ai') => {
+    setOutcomeOverlay({ type, value, scorer });
+    // Increased duration for foul and penalty to ~2 seconds for better readability
+    const duration = type === 'goal' ? 2500 : type === 'turnover' ? 1000 : 2000;
+    setTimeout(() => setOutcomeOverlay({ type: null, value: 0, scorer: undefined }), duration);
+  }, []);
+
   useEffect(() => {
     engineRef.current = new FootballEngine(
       selectedMode,
@@ -129,13 +137,7 @@ export default function FootballGame() {
       lastAIOutcomeRef.current = null;
       lastPlayerOutcomeRef.current = null;
     };
-  }, [selectedMode, selectedDuration, selectedDifficulty]);
-
-  const showOutcome = useCallback((type: OutcomeType, value: number, scorer?: 'player' | 'ai') => {
-    setOutcomeOverlay({ type, value, scorer });
-    const duration = type === 'goal' ? 2500 : type === 'turnover' ? 1000 : 1500;
-    setTimeout(() => setOutcomeOverlay({ type: null, value: 0, scorer: undefined }), duration);
-  }, []);
+  }, [selectedMode, selectedDuration, selectedDifficulty, showOutcome]);
 
   const handleMainButton = useCallback(() => {
     if (!engineRef.current) return;

@@ -292,6 +292,8 @@ export class FootballEngine {
         this.state.currentTurn = 'player1';
       }
     } else {
+      // In VS_PLAYER, keep stopwatch value between turns - do NOT reset to 0
+      // Each player sees where the opponent left off
       this.state.currentTurn = this.state.currentTurn === 'player1' ? 'player2' : 'player1';
     }
   }

@@ -461,50 +461,61 @@
 }
 
 .penalty {
-  background: rgba(255, 215, 0, 0.1);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 .penaltyIcon {
-  font-size: 4rem;
+  font-size: 5rem;
+  margin-bottom: 20px;
 }
 
 .penaltyText {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #FFD700;
-  letter-spacing: 6px;
-  text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: #FFF;
+  letter-spacing: 8px;
+  text-shadow:
+    0 4px 20px rgba(255, 215, 0, 0.8),
+    0 0 40px rgba(255, 215, 0, 0.4);
+  margin-bottom: 10px;
 }
 
 .penaltySubtext {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   color: #FFD700;
-  margin-top: 8px;
-  opacity: 0.7;
+  margin-top: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
 }
 
 .foul {
-  background: rgba(255, 140, 0, 0.1);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 .foulIcon {
-  font-size: 4rem;
+  font-size: 5rem;
+  margin-bottom: 20px;
 }
 
 .foulText {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #FF8C00;
-  letter-spacing: 6px;
-  text-shadow: 0 0 30px rgba(255, 140, 0, 0.4);
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: #FFF;
+  letter-spacing: 8px;
+  text-shadow:
+    0 4px 20px rgba(255, 140, 0, 0.8),
+    0 0 40px rgba(255, 140, 0, 0.4);
+  margin-bottom: 10px;
 }
 
 .foulSubtext {
-  font-size: 1rem;
+  font-size: 1.3rem;
   color: #FF8C00;
-  margin-top: 8px;
-  opacity: 0.7;
-  letter-spacing: 1px;
+  margin-top: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
 }
 
 .turnover {
