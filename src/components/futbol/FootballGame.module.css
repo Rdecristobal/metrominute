@@ -549,6 +549,84 @@
   margin-top: 8px;
 }
 
+/* FAIL overlay - for missed penalties */
+.penalty_fail {
+  background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+  animation: failPulse 0.5s ease-in-out;
+}
+
+.failText {
+  font-size: 6rem;
+  font-weight: 900;
+  color: #FFF;
+  letter-spacing: 16px;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(0, 0, 0, 0.6);
+  margin-bottom: 10px;
+  animation: failShake 0.6s ease-in-out;
+}
+
+.failValue {
+  font-size: 1.5rem;
+  color: #FFF;
+  margin-top: 12px;
+  opacity: 0.9;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* OUT overlay - for missed fouls */
+.foul_fail {
+  background: linear-gradient(135deg, #FF6600 0%, #FF4400 100%);
+  animation: outPulse 0.5s ease-in-out;
+}
+
+.outText {
+  font-size: 6rem;
+  font-weight: 900;
+  color: #FFF;
+  letter-spacing: 16px;
+  text-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(0, 0, 0, 0.6);
+  margin-bottom: 10px;
+  animation: outShake 0.6s ease-in-out;
+}
+
+.outValue {
+  font-size: 1.5rem;
+  color: #FFF;
+  margin-top: 12px;
+  opacity: 0.9;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes failPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes failShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes outPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes outShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
 @keyframes goalBounce {
   0% { transform: translateY(0) scale(1); }
   100% { transform: translateY(-15px) scale(1.1); }

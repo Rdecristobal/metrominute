@@ -241,14 +241,38 @@ export class FootballEngine {
     if (isGoal) {
       if (currentPlayer === 'player1') this.state.player1Score++;
       else this.state.player2Score++;
+      // Save foul goal outcome for UI to display
+      if (this.state.mode === GameMode.VS_AI || currentPlayer === 'player1') {
+        this.state.lastPlayerOutcome = {
+          outcome: 'goal',
+          value,
+          scored: true,
+          goalContext: 'foul'
+        };
+      } else {
+        this.state.lastAIOutcome = {
+          outcome: 'goal',
+          value,
+          scored: true,
+          goalContext: 'foul'
+        };
+      }
+    } else {
+      // Foul failed - show OUT overlay
+      if (this.state.mode === GameMode.VS_AI || currentPlayer === 'player1') {
+        this.state.lastPlayerOutcome = {
+          outcome: 'foul_fail',
+          value,
+          scored: false
+        };
+      } else {
+        this.state.lastAIOutcome = {
+          outcome: 'foul_fail',
+          value,
+          scored: false
+        };
+      }
     }
-
-    // Save player outcome for UI to display
-    this.state.lastPlayerOutcome = {
-      outcome: isGoal ? 'goal' : 'turnover',
-      value,
-      scored: isGoal
-    };
 
     // In VS_PLAYER mode, keep stopwatch value (don't reset to 0)
     if (this.state.mode === GameMode.VS_PLAYER) {
@@ -288,6 +312,56 @@ export class FootballEngine {
     if (isGoal) {
       if (rival === 'player1') this.state.player1Score++;
       else this.state.player2Score++;
+      // Penalty goal - save to appropriate outcome
+      if (this.state.mode === GameMode.VS_AI) {
+        // In VS_AI, AI takes the penalty (rival is player2)
+        this.state.lastAIOutcome = {
+          outcome: 'goal',
+          value,
+          scored: true,
+          goalContext: 'penalty'
+        };
+      } else {
+        // In VS_PLAYER, rival player takes the penalty
+        if (rival === 'player1') {
+          this.state.lastPlayerOutcome = {
+            outcome: 'goal',
+            value,
+            scored: true,
+            goalContext: 'penalty'
+          };
+        } else {
+          this.state.lastAIOutcome = {
+            outcome: 'goal',
+            value,
+            scored: true,
+            goalContext: 'penalty'
+          };
+        }
+      }
+    } else {
+      // Penalty failed - show FAIL overlay
+      if (this.state.mode === GameMode.VS_AI) {
+        this.state.lastAIOutcome = {
+          outcome: 'penalty_fail',
+          value,
+          scored: false
+        };
+      } else {
+        if (rival === 'player1') {
+          this.state.lastPlayerOutcome = {
+            outcome: 'penalty_fail',
+            value,
+            scored: false
+          };
+        } else {
+          this.state.lastAIOutcome = {
+            outcome: 'penalty_fail',
+            value,
+            scored: false
+          };
+        }
+      }
     }
 
     this.state.screen = GameScreen.GAME;
@@ -356,6 +430,7 @@ export class FootballEngine {
         this.state.totalAttempts++;
 
         let scored = false;
+        let outcomeSet = false;
 
         switch (scoring.outcome) {
           case 'goal':
@@ -387,18 +462,34 @@ export class FootballEngine {
             if (foulGoal) {
               this.state.player2Score++;
               scored = true;
+              // Foul retry goal - show goal outcome
+              this.state.lastAIOutcome = {
+                outcome: 'goal',
+                value: retryValue,
+                scored: true
+              };
+            } else {
+              // Foul retry failed - show OUT overlay
+              this.state.lastAIOutcome = {
+                outcome: 'foul_fail',
+                value: retryValue,
+                scored: false
+              };
             }
+            outcomeSet = true;
             break;
           case 'turnover':
             break;
         }
 
-        // Save AI outcome for UI to display
-        this.state.lastAIOutcome = {
-          outcome: scoring.outcome,
-          value: roundedValue,
-          scored
-        };
+        // Save AI outcome for UI to display (only if not already set)
+        if (!outcomeSet) {
+          this.state.lastAIOutcome = {
+            outcome: scoring.outcome,
+            value: roundedValue,
+            scored
+          };
+        }
 
         this.state.currentTurn = 'player1';
         this.state.stopwatchValue = 0;

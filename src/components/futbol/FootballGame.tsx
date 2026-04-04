@@ -8,20 +8,22 @@ import {
   GameScreen,
   GameMode,
   MatchDuration,
-  AIDifficulty
+  AIDifficulty,
+  FootballGameState
 } from '@/lib/futbol/types';
 import { loadSoundEnabled } from '@/lib/futbol/engine';
 import styles from './FootballGame.module.css';
 
-type OutcomeType = 'goal' | 'penalty' | 'foul' | 'turnover' | null;
+type OutcomeType = 'goal' | 'penalty' | 'foul' | 'turnover' | 'penalty_fail' | 'foul_fail' | null;
 
 export default function FootballGame() {
   const router = useRouter();
   const engineRef = useRef<FootballEngine | null>(null);
-  const [gameState, setGameState] = useState({
+  const [gameState, setGameState] = useState<FootballGameState>({
     screen: GameScreen.HOME,
     isPlaying: false,
-    currentTurn: 'player1' as 'player1' | 'player2' | 'ai',
+    isPaused: false,
+    currentTurn: 'player1',
     matchTime: 120,
     stopwatchValue: 0,
     stopwatchRunning: false,
@@ -29,25 +31,26 @@ export default function FootballGame() {
     player2Score: 0,
     player1Fouls: 0,
     player2Fouls: 0,
+    player1Attempts: [],
+    player2Attempts: [],
     penaltyRound: 1,
     player1PenaltyScore: 0,
     player2PenaltyScore: 0,
+    penaltyQueue: [],
+    bestStop: null,
+    totalAttempts: 0,
+    perfectGoals: 0,
+    penaltiesConceded: 0,
+    foulsConceded: 0,
     isExtraTime: false,
     isPenalties: false,
     isNewRecord: false,
     mode: GameMode.VS_AI,
-    matchDuration: 120 as MatchDuration,
+    matchDuration: 120,
     aiDifficulty: AIDifficulty.MEDIUM,
-    lastAIOutcome: null as {
-      outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
-      value: number;
-      scored: boolean;
-    } | null,
-    lastPlayerOutcome: null as {
-      outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
-      value: number;
-      scored: boolean;
-    } | null,
+    soundEnabled: true,
+    lastAIOutcome: null,
+    lastPlayerOutcome: null,
   });
 
   const [selectedMode, setSelectedMode] = useState<GameMode>(GameMode.VS_AI);
@@ -60,7 +63,8 @@ export default function FootballGame() {
     type: OutcomeType;
     value: number;
     scorer?: 'player' | 'ai';
-  }>({ type: null, value: 0, scorer: undefined });
+    goalContext?: 'penalty' | 'foul';
+  }>({ type: null, value: 0, scorer: undefined, goalContext: undefined });
 
   // Penalty prediction state
   const [penaltyPrediction, setPenaltyPrediction] = useState<'even' | 'odd' | null>(null);
@@ -73,11 +77,11 @@ export default function FootballGame() {
   const lastPlayerOutcomeRef = useRef<typeof gameState.lastPlayerOutcome>(null);
 
   // Outcome overlay display function
-  const showOutcome = useCallback((type: OutcomeType, value: number, scorer?: 'player' | 'ai') => {
-    setOutcomeOverlay({ type, value, scorer });
-    // Increased duration for foul and penalty to ~2 seconds for better readability
-    const duration = type === 'goal' ? 2500 : type === 'turnover' ? 1000 : 2000;
-    setTimeout(() => setOutcomeOverlay({ type: null, value: 0, scorer: undefined }), duration);
+  const showOutcome = useCallback((type: OutcomeType, value: number, scorer?: 'player' | 'ai', goalContext?: 'penalty' | 'foul') => {
+    setOutcomeOverlay({ type, value, scorer, goalContext });
+    // Duration for each outcome type
+    const duration = type === 'goal' ? 2500 : type === 'turnover' ? 1000 : (type === 'penalty_fail' || type === 'foul_fail') ? 1500 : 2000;
+    setTimeout(() => setOutcomeOverlay({ type: null, value: 0, scorer: undefined, goalContext: undefined }), duration);
   }, []);
 
   useEffect(() => {
@@ -91,13 +95,13 @@ export default function FootballGame() {
     const unsubscribe = engineRef.current.subscribe((state) => {
       // Check if AI outcome changed and show overlay
       if (state.lastAIOutcome && state.lastAIOutcome !== lastAIOutcomeRef.current) {
-        showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value, 'ai');
+        showOutcome(state.lastAIOutcome.outcome, state.lastAIOutcome.value, 'ai', state.lastAIOutcome.goalContext);
         lastAIOutcomeRef.current = state.lastAIOutcome;
       }
 
       // Check if player outcome changed and show overlay
       if (state.lastPlayerOutcome && state.lastPlayerOutcome !== lastPlayerOutcomeRef.current) {
-        showOutcome(state.lastPlayerOutcome.outcome, state.lastPlayerOutcome.value, 'player');
+        showOutcome(state.lastPlayerOutcome.outcome, state.lastPlayerOutcome.value, 'player', state.lastPlayerOutcome.goalContext);
         // Set foul retry flag if outcome is foul
         if (state.lastPlayerOutcome.outcome === 'foul') {
           setIsFoulRetry(true);
@@ -105,29 +109,7 @@ export default function FootballGame() {
         lastPlayerOutcomeRef.current = state.lastPlayerOutcome;
       }
 
-      setGameState({
-        screen: state.screen,
-        isPlaying: state.isPlaying,
-        currentTurn: state.currentTurn,
-        matchTime: state.matchTime,
-        stopwatchValue: state.stopwatchValue,
-        stopwatchRunning: state.stopwatchRunning,
-        player1Score: state.player1Score,
-        player2Score: state.player2Score,
-        player1Fouls: state.player1Fouls,
-        player2Fouls: state.player2Fouls,
-        penaltyRound: state.penaltyRound,
-        player1PenaltyScore: state.player1PenaltyScore,
-        player2PenaltyScore: state.player2PenaltyScore,
-        isExtraTime: state.isExtraTime,
-        isPenalties: state.isPenalties,
-        isNewRecord: state.isNewRecord,
-        mode: state.mode,
-        matchDuration: state.matchDuration,
-        aiDifficulty: state.aiDifficulty,
-        lastAIOutcome: state.lastAIOutcome,
-        lastPlayerOutcome: state.lastPlayerOutcome,
-      });
+      setGameState({ ...state });
     });
 
     return () => {
@@ -225,66 +207,118 @@ export default function FootballGame() {
           >
             {outcomeOverlay.type === 'goal' && (
               <>
-                <div className={styles.goalPlayer}>
-                  {/* Pixel art player celebrating - 16-bit style, no anti-aliasing */}
-                  <svg
-                    width="200"
-                    height="280"
-                    viewBox="0 0 200 280"
-                    fill="none"
-                    className={styles.pixelPlayerSvg}
-                  >
-                    {/* Head */}
-                    <rect x="75" y="15" width="50" height="50" fill="#FFD93D" />
-                    {/* Hair */}
-                    <rect x="70" y="10" width="60" height="15" fill="#4A3728" />
-                    <rect x="65" y="20" width="10" height="10" fill="#4A3728" />
-                    <rect x="125" y="20" width="10" height="10" fill="#4A3728" />
-                    {/* Eyes - determined expression */}
-                    <rect x="82" y="35" width="12" height="8" fill="#000" />
-                    <rect x="106" y="35" width="12" height="8" fill="#000" />
-                    {/* Mouth - shouting in celebration */}
-                    <rect x="92" y="55" width="16" height="12" fill="#000" />
-                    {/* Neck */}
-                    <rect x="88" y="65" width="24" height="15" fill="#FFD93D" />
-                    {/* Torso - shirt color based on scorer */}
-                    {outcomeOverlay.scorer === 'ai' ? (
-                      // AI player - blue shirt
-                      <>
-                        <rect x="55" y="80" width="90" height="80" fill="#4488FF" />
-                        <rect x="45" y="85" width="15" height="70" fill="#4488FF" />
-                        <rect x="140" y="85" width="15" height="70" fill="#4488FF" />
-                      </>
-                    ) : (
-                      // Player - pink neon shirt
-                      <>
-                        <rect x="55" y="80" width="90" height="80" fill="#FF2D78" />
-                        <rect x="45" y="85" width="15" height="70" fill="#FF2D78" />
-                        <rect x="140" y="85" width="15" height="70" fill="#FF2D78" />
-                      </>
-                    )}
-                    {/* Arms up celebrating */}
-                    <rect x="20" y="75" width="35" height="15" fill="#FFD93D" />
-                    <rect x="10" y="65" width="15" height="25" fill="#FFD93D" />
-                    <rect x="145" y="75" width="35" height="15" fill="#FFD93D" />
-                    <rect x="175" y="65" width="15" height="25" fill="#FFD93D" />
-                    {/* Hands - fists closed */}
-                    <rect x="8" y="55" width="20" height="20" fill="#FFD93D" />
-                    <rect x="172" y="55" width="20" height="20" fill="#FFD93D" />
-                    {/* Shorts - white */}
-                    <rect x="60" y="160" width="80" height="45" fill="#FFF" />
-                    <rect x="55" y="165" width="10" height="40" fill="#FFF" />
-                    <rect x="135" y="165" width="10" height="40" fill="#FFF" />
-                    {/* Legs */}
-                    <rect x="60" y="205" width="30" height="60" fill="#FFD93D" />
-                    <rect x="110" y="205" width="30" height="60" fill="#FFD93D" />
-                    {/* Boots - black */}
-                    <rect x="55" y="255" width="40" height="25" fill="#1A1A1A" />
-                    <rect x="105" y="255" width="40" height="25" fill="#1A1A1A" />
-                  </svg>
-                </div>
+                {outcomeOverlay.goalContext && outcomeOverlay.scorer === 'player' && (
+                  <div className={styles.goalPlayer}>
+                    {/* Pixel art player celebrating - 16-bit style, no anti-aliasing */}
+                    <svg
+                      width="200"
+                      height="280"
+                      viewBox="0 0 200 280"
+                      fill="none"
+                      className={styles.pixelPlayerSvg}
+                    >
+                      {/* Head */}
+                      <rect x="75" y="15" width="50" height="50" fill="#FFD93D" />
+                      {/* Hair */}
+                      <rect x="70" y="10" width="60" height="15" fill="#4A3728" />
+                      <rect x="65" y="20" width="10" height="10" fill="#4A3728" />
+                      <rect x="125" y="20" width="10" height="10" fill="#4A3728" />
+                      {/* Eyes - determined expression */}
+                      <rect x="82" y="35" width="12" height="8" fill="#000" />
+                      <rect x="106" y="35" width="12" height="8" fill="#000" />
+                      {/* Mouth - shouting in celebration */}
+                      <rect x="92" y="55" width="16" height="12" fill="#000" />
+                      {/* Neck */}
+                      <rect x="88" y="65" width="24" height="15" fill="#FFD93D" />
+                      {/* Torso - pink neon shirt (player) */}
+                      <rect x="55" y="80" width="90" height="80" fill="#FF2D78" />
+                      <rect x="45" y="85" width="15" height="70" fill="#FF2D78" />
+                      <rect x="140" y="85" width="15" height="70" fill="#FF2D78" />
+                      {/* Arms up celebrating */}
+                      <rect x="20" y="75" width="35" height="15" fill="#FFD93D" />
+                      <rect x="10" y="65" width="15" height="25" fill="#FFD93D" />
+                      <rect x="145" y="75" width="35" height="15" fill="#FFD93D" />
+                      <rect x="175" y="65" width="15" height="25" fill="#FFD93D" />
+                      {/* Hands - fists closed */}
+                      <rect x="8" y="55" width="20" height="20" fill="#FFD93D" />
+                      <rect x="172" y="55" width="20" height="20" fill="#FFD93D" />
+                      {/* Shorts - white */}
+                      <rect x="60" y="160" width="80" height="45" fill="#FFF" />
+                      <rect x="55" y="165" width="10" height="40" fill="#FFF" />
+                      <rect x="135" y="165" width="10" height="40" fill="#FFF" />
+                      {/* Legs */}
+                      <rect x="60" y="205" width="30" height="60" fill="#FFD93D" />
+                      <rect x="110" y="205" width="30" height="60" fill="#FFD93D" />
+                      {/* Boots - black */}
+                      <rect x="55" y="255" width="40" height="25" fill="#1A1A1A" />
+                      <rect x="105" y="255" width="40" height="25" fill="#1A1A1A" />
+                    </svg>
+                  </div>
+                )}
+                {!outcomeOverlay.goalContext && (
+                  <div className={styles.goalPlayer}>
+                    {/* Pixel art player celebrating - 16-bit style, no anti-aliasing */}
+                    <svg
+                      width="200"
+                      height="280"
+                      viewBox="0 0 200 280"
+                      fill="none"
+                      className={styles.pixelPlayerSvg}
+                    >
+                      {/* Head */}
+                      <rect x="75" y="15" width="50" height="50" fill="#FFD93D" />
+                      {/* Hair */}
+                      <rect x="70" y="10" width="60" height="15" fill="#4A3728" />
+                      <rect x="65" y="20" width="10" height="10" fill="#4A3728" />
+                      <rect x="125" y="20" width="10" height="10" fill="#4A3728" />
+                      {/* Eyes - determined expression */}
+                      <rect x="82" y="35" width="12" height="8" fill="#000" />
+                      <rect x="106" y="35" width="12" height="8" fill="#000" />
+                      {/* Mouth - shouting in celebration */}
+                      <rect x="92" y="55" width="16" height="12" fill="#000" />
+                      {/* Neck */}
+                      <rect x="88" y="65" width="24" height="15" fill="#FFD93D" />
+                      {/* Torso - shirt color based on scorer */}
+                      {outcomeOverlay.scorer === 'ai' ? (
+                        // AI player - blue shirt
+                        <>
+                          <rect x="55" y="80" width="90" height="80" fill="#4488FF" />
+                          <rect x="45" y="85" width="15" height="70" fill="#4488FF" />
+                          <rect x="140" y="85" width="15" height="70" fill="#4488FF" />
+                        </>
+                      ) : (
+                        // Player - pink neon shirt
+                        <>
+                          <rect x="55" y="80" width="90" height="80" fill="#FF2D78" />
+                          <rect x="45" y="85" width="15" height="70" fill="#FF2D78" />
+                          <rect x="140" y="85" width="15" height="70" fill="#FF2D78" />
+                        </>
+                      )}
+                      {/* Arms up celebrating */}
+                      <rect x="20" y="75" width="35" height="15" fill="#FFD93D" />
+                      <rect x="10" y="65" width="15" height="25" fill="#FFD93D" />
+                      <rect x="145" y="75" width="35" height="15" fill="#FFD93D" />
+                      <rect x="175" y="65" width="15" height="25" fill="#FFD93D" />
+                      {/* Hands - fists closed */}
+                      <rect x="8" y="55" width="20" height="20" fill="#FFD93D" />
+                      <rect x="172" y="55" width="20" height="20" fill="#FFD93D" />
+                      {/* Shorts - white */}
+                      <rect x="60" y="160" width="80" height="45" fill="#FFF" />
+                      <rect x="55" y="165" width="10" height="40" fill="#FFF" />
+                      <rect x="135" y="165" width="10" height="40" fill="#FFF" />
+                      {/* Legs */}
+                      <rect x="60" y="205" width="30" height="60" fill="#FFD93D" />
+                      <rect x="110" y="205" width="30" height="60" fill="#FFD93D" />
+                      {/* Boots - black */}
+                      <rect x="55" y="255" width="40" height="25" fill="#1A1A1A" />
+                      <rect x="105" y="255" width="40" height="25" fill="#1A1A1A" />
+                    </svg>
+                  </div>
+                )}
                 <div className={styles.goalText}>
-                  {outcomeOverlay.scorer === 'ai' ? 'AI GOAL!' : 'GOAL!'}
+                  {outcomeOverlay.goalContext === 'penalty' ? 'PENALTY GOAL!' :
+                   outcomeOverlay.goalContext === 'foul' ? 'FOUL GOAL!' :
+                   outcomeOverlay.scorer === 'ai' ? 'AI GOAL!' : 'GOAL!'}
                 </div>
                 <div className={styles.goalValue}>{formatStopwatch(outcomeOverlay.value)}</div>
                 {/* Confetti particles */}
@@ -423,6 +457,18 @@ export default function FootballGame() {
               <>
                 <div className={styles.turnoverText}>TURNOVER</div>
                 <div className={styles.turnoverValue}>{formatStopwatch(outcomeOverlay.value)}</div>
+              </>
+            )}
+            {outcomeOverlay.type === 'penalty_fail' && (
+              <>
+                <div className={styles.failText}>FAIL</div>
+                <div className={styles.failValue}>{formatStopwatch(outcomeOverlay.value)}</div>
+              </>
+            )}
+            {outcomeOverlay.type === 'foul_fail' && (
+              <>
+                <div className={styles.outText}>OUT</div>
+                <div className={styles.outValue}>{formatStopwatch(outcomeOverlay.value)}</div>
               </>
             )}
           </motion.div>

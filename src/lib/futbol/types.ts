@@ -24,7 +24,7 @@ export enum AIDifficulty {
   HARD = 'hard'
 }
 
-export type Outcome = 'goal' | 'penalty' | 'foul' | 'turnover';
+export type Outcome = 'goal' | 'penalty' | 'foul' | 'turnover' | 'penalty_fail' | 'foul_fail';
 
 export interface Attempt {
   playerId: 'player1' | 'player2' | 'ai';
@@ -85,16 +85,18 @@ export interface FootballGameState {
 
   // Último resultado de la IA
   lastAIOutcome: {
-    outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
+    outcome: 'goal' | 'penalty' | 'foul' | 'turnover' | 'penalty_fail' | 'foul_fail';
     value: number;
     scored: boolean;
+    goalContext?: 'penalty' | 'foul';
   } | null;
 
   // Último resultado del jugador
   lastPlayerOutcome: {
-    outcome: 'goal' | 'penalty' | 'foul' | 'turnover';
+    outcome: 'goal' | 'penalty' | 'foul' | 'turnover' | 'penalty_fail' | 'foul_fail';
     value: number;
     scored: boolean;
+    goalContext?: 'penalty' | 'foul';
   } | null;
 }
 
