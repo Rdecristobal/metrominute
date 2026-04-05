@@ -20,6 +20,7 @@ export default function TanksGame() {
   const engineRef = useRef<TanksEngine | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // Check orientation
   useEffect(() => {
@@ -52,58 +53,54 @@ export default function TanksGame() {
     };
   }, []);
 
-  // Setup canvas resize observer - ONCE on mount, not on screen change
-  useEffect(() => {
+  // Setup canvas resize with ref callback - fires when canvas mounts/unmounts
+  const handleCanvasRef = useCallback((canvas: HTMLCanvasElement | null) => {
+    canvasRef.current = canvas;
+
+    if (!canvas) {
+      // Canvas unmounted - clean up observer
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
+      return;
+    }
+
+    // Canvas mounted - observe container and set initial dimensions
+    const container = document.getElementById('tanks-canvas-container');
+    if (!container) return;
+
+    // Set initial dimensions immediately
+    const rect = container.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      const dimensions: CanvasDimensions = {
+        width: rect.width,
+        height: rect.height,
+      };
+      engineRef.current?.updateDimensions(dimensions);
+    }
+
+    // Create and attach ResizeObserver
     const resizeObserver = new ResizeObserver((entries) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+      const entry = entries[0];
+      if (!entry) return;
 
-      const container = entries[0].contentRect;
-
-      // Only update if container has valid dimensions
-      if (container.width > 0 && container.height > 0) {
-        canvas.width = container.width;
-        canvas.height = container.height;
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) {
+        canvas.width = width;
+        canvas.height = height;
 
         const dimensions: CanvasDimensions = {
-          width: container.width,
-          height: container.height,
+          width,
+          height,
         };
         engineRef.current?.updateDimensions(dimensions);
       }
     });
 
-    const container = document.getElementById('tanks-canvas-container');
-    if (container) {
-      resizeObserver.observe(container);
-    }
-
-    // Also force initial resize when canvas mounts
-    const forceInitialResize = () => {
-      const canvas = canvasRef.current;
-      const container = document.getElementById('tanks-canvas-container');
-      if (canvas && container) {
-        const rect = container.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          canvas.width = rect.width;
-          canvas.height = rect.height;
-
-          const dimensions: CanvasDimensions = {
-            width: rect.width,
-            height: rect.height,
-          };
-          engineRef.current?.updateDimensions(dimensions);
-        }
-      }
-    };
-
-    // Force resize after a small delay to ensure container is fully laid out
-    const timeoutId = setTimeout(forceInitialResize, 100);
-
-    return () => {
-      resizeObserver.disconnect();
-      clearTimeout(timeoutId);
-    };
+    resizeObserver.observe(container);
+    resizeObserverRef.current = resizeObserver;
   }, []);
 
   // Game loop
@@ -255,7 +252,7 @@ export default function TanksGame() {
           onPowerChange={handlePowerChange}
         >
           <canvas
-            ref={canvasRef}
+            ref={handleCanvasRef}
             className="w-full h-full block"
           />
         </GameScreen>
