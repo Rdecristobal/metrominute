@@ -179,13 +179,13 @@ export default function TanksGame() {
     setScreen('playing');
   }, [mode, tankCount]);
 
-  // Show rotate overlay for portrait — only at menu
-  if (isPortrait && screen === 'menu') {
+  // Show rotate overlay for portrait — only DURING gameplay, not menu/setup
+  if (isPortrait && (screen === 'playing' || screen === 'exploding')) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50">
         <div className="text-4xl mb-4">🔄</div>
         <h2 className="text-2xl font-bold mb-2 text-[#ff2d78]">Rotate your device</h2>
-        <p className="text-gray-400">Tanks requires landscape mode</p>
+        <p className="text-gray-400">Tanks requires landscape mode to play</p>
       </div>
     );
   }
