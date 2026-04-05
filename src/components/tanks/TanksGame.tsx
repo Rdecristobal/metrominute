@@ -197,8 +197,8 @@ export default function TanksGame() {
     lastPointerRef.current = null;
   }, []);
 
-  // Show rotate overlay for portrait
-  if (isPortrait) {
+  // Show rotate overlay for portrait — only at menu, not during setup
+  if (isPortrait && screen === 'menu') {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50">
         <div className="text-4xl mb-4">🔄</div>

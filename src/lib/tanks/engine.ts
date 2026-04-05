@@ -69,13 +69,13 @@ export class TanksEngine {
   // Create tanks for the game
   private createTanks(config: GameConfig, terrain: Array<{ x: number; y: number }>): Tank[] {
     const tanks: Tank[] = [];
-    const margin = this.dimensions.width * 0.08;
+    const margin = this.dimensions.width * 0.12;
     const playableWidth = this.dimensions.width - (margin * 2);
     const spacing = playableWidth / (config.tankCount + 1);
 
     for (let i = 0; i < config.tankCount; i++) {
       const baseX = margin + spacing * (i + 1);
-      const jitter = (Math.random() - 0.5) * 2 * spacing * 0.15;
+      const jitter = (Math.random() - 0.5) * 2 * spacing * 0.06;
       const x = baseX + jitter;
 
       // Get Y position from terrain

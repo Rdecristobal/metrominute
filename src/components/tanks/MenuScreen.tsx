@@ -27,8 +27,8 @@ export default function MenuScreen({ onSelectMode }: MenuScreenProps) {
           TANKS
         </span>
       </h1>
-      <p className="text-sm tracking-widest mb-12" style={{ color: '#555' }}>
-        ARTILLERY WARFARE
+      <p className="text-sm tracking-widest mb-12" style={{ color: '#444' }}>
+        Artillery Warfare
       </p>
 
       {/* Mode buttons */}

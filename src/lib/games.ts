@@ -21,6 +21,16 @@ export const GAMES: Game[] = [
     accentColor: 'var(--neon-green)',
     tags: ['precision', 'sports'],
   },
+  {
+    id: 'tanks',
+    title: 'Tanks',
+    icon: '🎖️',
+    description: 'Artillery warfare. Angle, power, fire! Destroy all enemies.',
+    href: '/tanks',
+    available: true,
+    accentColor: '#ff2d78',
+    tags: ['strategy', 'turn-based'],
+  },
 ];
 
 export function getGameById(id: string): Game | undefined {
