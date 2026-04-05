@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { GameMode, GamePhase, GameState, CanvasDimensions } from '@/lib/tanks/types';
 import { TanksEngine } from '@/lib/tanks/engine';
-import { renderGame, clearStarsCache } from '@/lib/tanks/renderer';
+import { renderGame } from '@/lib/tanks/renderer';
 import { MIN_ANGLE, MAX_ANGLE, MIN_POWER, MAX_POWER } from '@/lib/tanks/constants';
 import MenuScreen from './MenuScreen';
 import SetupScreen from './SetupScreen';
@@ -52,30 +52,59 @@ export default function TanksGame() {
     };
   }, []);
 
-  // Setup canvas resize observer
+  // Setup canvas resize observer - ONCE on mount, not on screen change
   useEffect(() => {
-    if (!canvasRef.current) return;
-
     const resizeObserver = new ResizeObserver((entries) => {
       const canvas = canvasRef.current;
-      const container = entries[0].contentRect;
       if (!canvas) return;
-      canvas.width = container.width;
-      canvas.height = container.height;
 
-      const dimensions: CanvasDimensions = {
-        width: container.width,
-        height: container.height,
-      };
-      engineRef.current?.updateDimensions(dimensions);
+      const container = entries[0].contentRect;
+
+      // Only update if container has valid dimensions
+      if (container.width > 0 && container.height > 0) {
+        canvas.width = container.width;
+        canvas.height = container.height;
+
+        const dimensions: CanvasDimensions = {
+          width: container.width,
+          height: container.height,
+        };
+        engineRef.current?.updateDimensions(dimensions);
+      }
     });
 
     const container = document.getElementById('tanks-canvas-container');
     if (container) {
       resizeObserver.observe(container);
     }
-    return () => resizeObserver.disconnect();
-  }, [screen]);
+
+    // Also force initial resize when canvas mounts
+    const forceInitialResize = () => {
+      const canvas = canvasRef.current;
+      const container = document.getElementById('tanks-canvas-container');
+      if (canvas && container) {
+        const rect = container.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvas.width = rect.width;
+          canvas.height = rect.height;
+
+          const dimensions: CanvasDimensions = {
+            width: rect.width,
+            height: rect.height,
+          };
+          engineRef.current?.updateDimensions(dimensions);
+        }
+      }
+    };
+
+    // Force resize after a small delay to ensure container is fully laid out
+    const timeoutId = setTimeout(forceInitialResize, 100);
+
+    return () => {
+      resizeObserver.disconnect();
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   // Game loop
   useEffect(() => {
@@ -89,6 +118,17 @@ export default function TanksGame() {
 
     const loop = () => {
       if (!engineRef.current || !canvasRef.current) return;
+
+      // Skip render if canvas has invalid dimensions (0x0)
+      if (canvasRef.current.width === 0 || canvasRef.current.height === 0) {
+        // Try to resize again on next frame
+        if (engineRef.current.isAnimating()) {
+          gameLoopRef.current = requestAnimationFrame(loop);
+        } else {
+          gameLoopRef.current = null;
+        }
+        return;
+      }
 
       engineRef.current.update();
 
