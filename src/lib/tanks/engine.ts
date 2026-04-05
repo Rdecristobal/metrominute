@@ -34,6 +34,8 @@ export class TanksEngine {
   private dimensions: CanvasDimensions = { width: 800, height: 600 };
   private aiThinkingFrames: number = 0;
   private aiShotDelayTimer: number | null = null;
+  private aiHasProgrammedShot: boolean = false;
+  private previousDimensions: CanvasDimensions | null = null;
 
   constructor(config: GameConfig, dimensions: CanvasDimensions = { width: 800, height: 600 }) {
     this.dimensions = dimensions;
@@ -128,6 +130,7 @@ export class TanksEngine {
       tankCount: this.state.tankCount,
     });
     this.aiThinkingFrames = 0;
+    this.aiHasProgrammedShot = false;
     if (this.aiShotDelayTimer) {
       clearTimeout(this.aiShotDelayTimer);
       this.aiShotDelayTimer = null;
@@ -147,6 +150,7 @@ export class TanksEngine {
     this.state = this.createInitialState(config);
     this.state.phase = 'playing';
     this.aiThinkingFrames = 0;
+    this.aiHasProgrammedShot = false;
     clearStarsCache();
     this.notify();
 
@@ -221,11 +225,14 @@ export class TanksEngine {
   private updateAI(): void {
     this.aiThinkingFrames++;
 
-    if (shouldAIFire(this.aiThinkingFrames)) {
+    if (shouldAIFire(this.aiThinkingFrames) && !this.aiHasProgrammedShot) {
       // Calculate shot after thinking delay
       const target = getAITarget(this.state, this.state.tanks[this.state.activeTankIndex]);
       if (target) {
         const shot = calculateAIShot(this.state.tanks[this.state.activeTankIndex], target, this.state.wind);
+
+        // Mark that we've programmed a shot to prevent multiple setTimeout calls
+        this.aiHasProgrammedShot = true;
 
         // Apply AI shot after additional delay
         if (this.aiShotDelayTimer) {
@@ -237,6 +244,7 @@ export class TanksEngine {
           this.fire();
           this.aiThinkingFrames = 0;
           this.aiShotDelayTimer = null;
+          this.aiHasProgrammedShot = false;
         }, 300);
       }
     }
@@ -245,6 +253,7 @@ export class TanksEngine {
   // Start AI thinking
   private startAIThinking(): void {
     this.aiThinkingFrames = 0;
+    this.aiHasProgrammedShot = false;
   }
 
   // Handle explosion
@@ -400,13 +409,32 @@ export class TanksEngine {
   // Update canvas dimensions
   updateDimensions(dimensions: CanvasDimensions): void {
     this.dimensions = dimensions;
-    // Regenerate terrain with new dimensions
-    this.state.terrain = generateTerrain(dimensions);
+
+    // Only regenerate terrain if previous dimensions were invalid (0x0)
+    // Otherwise, scale terrain points proportionally to preserve deformations
+    if (!this.previousDimensions || this.previousDimensions.width === 0 || this.previousDimensions.height === 0) {
+      // Initial terrain generation or previous dimensions were invalid
+      this.state.terrain = generateTerrain(dimensions);
+    } else {
+      // Scale terrain points proportionally to preserve deformations
+      const scaleX = dimensions.width / this.previousDimensions.width;
+      const scaleY = dimensions.height / this.previousDimensions.height;
+
+      this.state.terrain = this.state.terrain.map(point => ({
+        x: point.x * scaleX,
+        y: point.y * scaleY,
+      }));
+    }
+
+    // Store current dimensions for next update
+    this.previousDimensions = { ...dimensions };
+
     // Recalculate tank positions
     this.state.tanks.forEach(tank => {
       const { y } = getTankPosition(this.state.terrain, tank.x);
       tank.y = y;
     });
+
     clearStarsCache();
     this.notify();
   }
