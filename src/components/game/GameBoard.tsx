@@ -431,24 +431,36 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
       if (selectedMode === 'classic' && engineState.currentPhase !== prevPhaseRef.current) {
         // Bloquear actualizaciones durante la transición
         isTransitioningRef.current = true;
-        
+
         // Limpiar targets de la fase anterior
         engineRef.current?.clearTargets();
         setTargets([]);
-        
+
         const phaseIndex = engineState.currentPhase;
         const phase = PHASES[phaseIndex];
         setPhaseIndicator(phase.name);
         setShowPhaseIndicator(true);
         setTimeout(() => setShowPhaseIndicator(false), 2000);
-        
+
         // Desbloquear y spawnear nuevos targets
         isTransitioningRef.current = false;
         setupMovementAndDecoys();
+
         if (gameAreaRef.current) {
-          engineRef.current?.spawnTarget(gameAreaRef.current.offsetWidth, gameAreaRef.current.offsetHeight, false);
+          const gameArea = gameAreaRef.current;
+          const phaseConfig = engineRef.current?.getPhaseConfig();
+
+          // Spawn normal target
+          engineRef.current?.spawnTarget(gameArea.offsetWidth, gameArea.offsetHeight, false);
+
+          // Spawn decoys for this phase
+          if (phaseConfig?.decoys && phaseConfig.decoys > 0) {
+            for (let i = 0; i < phaseConfig.decoys; i++) {
+              engineRef.current?.spawnDecoy(gameArea.offsetWidth, gameArea.offsetHeight);
+            }
+          }
         }
-        
+
         prevPhaseRef.current = engineState.currentPhase;
       }
     }, 1000);
