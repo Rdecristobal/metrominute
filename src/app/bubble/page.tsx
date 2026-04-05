@@ -12,10 +12,10 @@ function GameContent() {
   const mode = (modeParam as 'classic' | 'normal' | null);
 
   return (
-    <main className="min-h-screen relative">
+    <main className="h-[100dvh] w-full overflow-hidden relative">
       <RetroBackground />
 
-      <div className="relative z-10 min-h-screen flex flex-col">
+      <div className="relative z-10 h-[100dvh] w-full overflow-hidden flex flex-col">
         <BackToHub />
         <GameBoard mode={mode || undefined} />
       </div>

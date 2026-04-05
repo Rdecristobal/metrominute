@@ -187,7 +187,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
     if (result.success && target) {
       const isGolden = target.type === 'golden';
       const isDecoy = target.type === 'decoy';
-      const color = isGolden ? '#FFD700' : (isDecoy ? '#4ADE80' : '#00D4FF');
+      const color = isGolden ? '#FFD700' : (isDecoy ? '#FB923C' : '#00D4FF');
 
       createExplosion(clientX, clientY, color, isGolden ? 20 : 12);
       showFloatingScore(clientX, clientY, result.points, isGolden, isDecoy);
@@ -214,7 +214,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
         setTimeout(() => setShowFlash(false), 200);
       } else if (target.type === 'decoy') {
         setShowFlash(true);
-        setFlashColor('#10B981');
+        setFlashColor('#FB923C');
         setTimeout(() => setShowFlash(false), 200);
       }
 
@@ -860,34 +860,34 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
         }
       `}</style>
 
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-[#1A1A2E] via-[#0D0D1A] to-[#0D0D1A] min-h-screen relative overflow-hidden">
-        <div className="relative w-full max-w-[420px] h-[100dvh] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800 flex flex-col">
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-[#1A1A2E] via-[#0D0D1A] to-[#0D0D1A] h-[100dvh] w-full overflow-hidden">
+        <div className="relative w-full h-[100dvh] max-w-[480px] overflow-hidden rounded-lg shadow-2xl bg-gradient-to-b from-zinc-900/50 to-black/50 border border-zinc-800 flex flex-col mx-auto">
           {/* Header */}
           {(screen === 'game' || screen === 'countdown') && (
-            <div className="relative p-2 sm:p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent shrink-0">
-              <div className="flex gap-2 sm:gap-4">
+            <div className="relative p-1.5 sm:p-2 md:p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent shrink-0">
+              <div className="flex gap-1.5 sm:gap-2 md:gap-4">
                 <div className="text-center">
-                  <div className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wider">Time</div>
-                  <div className={`text-sm sm:text-lg md:text-xl font-bold ${gameState.timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                  <div className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-500 uppercase tracking-wider">Time</div>
+                  <div className={`text-xs sm:text-sm md:text-lg lg:text-xl font-bold ${gameState.timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
                     {selectedMode === 'normal' && gameState.survivalTime > 0 ? gameState.survivalTime : gameState.timeLeft}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wider">Score</div>
-                  <div className="text-sm sm:text-lg md:text-xl font-bold text-white">{gameState.score}</div>
+                  <div className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-500 uppercase tracking-wider">Score</div>
+                  <div className="text-xs sm:text-sm md:text-lg lg:text-xl font-bold text-white">{gameState.score}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wider">Combo</div>
-                  <div className="text-sm sm:text-lg md:text-xl font-bold text-yellow-400">x{gameState.multiplier}</div>
+                  <div className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-500 uppercase tracking-wider">Combo</div>
+                  <div className="text-xs sm:text-sm md:text-lg lg:text-xl font-bold text-yellow-400">x{gameState.multiplier}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-3">
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
                 <div className="text-center hidden sm:block">
-                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">High Score</div>
-                  <div className="text-sm sm:text-xl font-bold text-white">{gameState.highScore}</div>
+                  <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-500 uppercase tracking-wider">High Score</div>
+                  <div className="text-xs sm:text-sm md:text-xl font-bold text-white">{gameState.highScore}</div>
                 </div>
                 <button
-                  className="bg-gray-800 hover:bg-gray-700 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs transition-colors"
+                  className="bg-gray-800 hover:bg-gray-700 text-white px-1 py-0.5 sm:px-1.5 sm:py-0.5 md:px-2 md:py-1 rounded-full text-[8px] sm:text-[10px] md:text-xs transition-colors"
                   onClick={() => {
                     const newState = !gameState.soundEnabled;
                     engineRef.current?.toggleSound(newState);
@@ -901,7 +901,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
 
           {/* Challenge progress bar (Normal mode) */}
           {selectedMode === 'normal' && (screen === 'game' || screen === 'countdown') && (
-            <div className="relative left-1/2 transform -translate-x-1/2 w-[70%] sm:w-[60%] h-[16px] sm:h-[20px] bg-white/10 rounded-full overflow-hidden border-2 border-white/20 z-5 shrink-0">
+            <div className="relative left-1/2 transform -translate-x-1/2 w-[75%] sm:w-[70%] md:w-[60%] h-[14px] sm:h-[16px] md:h-[20px] bg-white/10 rounded-full overflow-hidden border-2 border-white/20 z-5 shrink-0">
               <div
                 className={`h-full transition-all duration-300 ${
                   gameState.survivalTime > 0
@@ -926,7 +926,7 @@ export default function GameBoard({ mode: propMode }: GameBoardProps) {
                   }%`
                 }}
               />
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-xs font-bold text-white whitespace-nowrap" style={{ textShadow: '0 0 5px rgba(0,0,0,0.8)' }}>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] md:text-xs font-bold text-white whitespace-nowrap" style={{ textShadow: '0 0 5px rgba(0,0,0,0.8)' }}>
                 {gameState.survivalTime > 0
                   ? `${gameState.score} (Survival: ${gameState.survivalTime}s)`
                   : `${gameState.score} / ${gameState.currentChallengeScoreRequired}`

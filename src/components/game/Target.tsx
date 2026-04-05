@@ -37,9 +37,9 @@ export default function Target({ target, onClick }: TargetProps) {
       case 'decoy':
         return {
           ...baseStyle,
-          background: 'radial-gradient(circle at 30% 30%, #22C55E, #16A34A)',
-          border: '3px solid #4ADE80',
-          boxShadow: '0 0 20px rgba(74, 222, 128, 0.6), 0 0 40px rgba(74, 222, 128, 0.3), inset 0 0 15px rgba(74, 222, 128, 0.2)',
+          background: 'radial-gradient(circle at 30% 30%, #F97316, #EA580C)',
+          border: '3px solid #FB923C',
+          boxShadow: '0 0 20px rgba(251, 146, 60, 0.8), 0 0 40px rgba(251, 146, 60, 0.4), inset 0 0 15px rgba(251, 146, 60, 0.3)',
           animation: 'decoyPulse 2s ease-in-out infinite'
         };
       default:

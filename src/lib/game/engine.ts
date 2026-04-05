@@ -16,8 +16,21 @@ export const CHALLENGES: Challenge[] = [
   { name: '5: SURVIVAL', startTime: 30, endTime: 0, targetMovement: true, movementInterval: 800, decoys: 5, scoreRequired: 0, golden: false, isSurvival: true, survivalTime: 30, scoreDecrement: 10 }
 ];
 
-const TARGET_SIZE = 45;
-const HEADER_HEIGHT = 140;
+// Base sizes - will be adjusted based on screen size
+const BASE_TARGET_SIZE = 45;
+const BASE_HEADER_HEIGHT = 140;
+
+// Calculate responsive sizes based on game area dimensions
+export function getResponsiveSizes(gameWidth: number, gameHeight: number) {
+  // Adjust target size for smaller screens (min 35px, max 50px)
+  const scaleFactor = Math.min(gameWidth / 400, gameHeight / 700);
+  const targetSize = Math.max(35, Math.min(50, BASE_TARGET_SIZE * scaleFactor));
+
+  // Adjust header height based on viewport
+  const headerHeight = Math.min(BASE_HEADER_HEIGHT, gameHeight * 0.2);
+
+  return { targetSize, headerHeight };
+}
 
 export class GameEngine {
   private state: GameState;
@@ -145,23 +158,25 @@ export class GameEngine {
   spawnTarget(gameWidth: number, gameHeight: number, isGolden: boolean = false): Target | null {
     if (!this.state.isPlaying || this.state.isGameOver) return null;
 
-    if (gameWidth < TARGET_SIZE * 2 || gameHeight < HEADER_HEIGHT + TARGET_SIZE) {
+    const { targetSize, headerHeight } = getResponsiveSizes(gameWidth, gameHeight);
+
+    if (gameWidth < targetSize * 2 || gameHeight < headerHeight + targetSize) {
       console.warn('Game area too small for spawn:', gameWidth, gameHeight);
       return null;
     }
 
-    const maxX = gameWidth - TARGET_SIZE;
-    const maxY = gameHeight - TARGET_SIZE;
+    const maxX = gameWidth - targetSize;
+    const maxY = gameHeight - targetSize;
 
     const x = Math.random() * maxX;
-    const y = HEADER_HEIGHT + Math.random() * (maxY - HEADER_HEIGHT);
+    const y = headerHeight + Math.random() * (maxY - headerHeight);
 
     const target: Target = {
       id: `target-${Date.now()}-${Math.random()}`,
       x,
       y,
       type: isGolden ? 'golden' : 'normal',
-      size: TARGET_SIZE
+      size: targetSize
     };
 
     this.targets.set(target.id, target);
@@ -173,23 +188,25 @@ export class GameEngine {
   spawnDecoy(gameWidth: number, gameHeight: number): Target | null {
     if (!this.state.isPlaying || this.state.isGameOver) return null;
 
-    if (gameWidth < TARGET_SIZE * 2 || gameHeight < HEADER_HEIGHT + TARGET_SIZE) {
+    const { targetSize, headerHeight } = getResponsiveSizes(gameWidth, gameHeight);
+
+    if (gameWidth < targetSize * 2 || gameHeight < headerHeight + targetSize) {
       console.warn('Game area too small for spawn:', gameWidth, gameHeight);
       return null;
     }
 
-    const maxX = gameWidth - TARGET_SIZE;
-    const maxY = gameHeight - TARGET_SIZE;
+    const maxX = gameWidth - targetSize;
+    const maxY = gameHeight - targetSize;
 
     const x = Math.random() * maxX;
-    const y = HEADER_HEIGHT + Math.random() * (maxY - HEADER_HEIGHT);
+    const y = headerHeight + Math.random() * (maxY - headerHeight);
 
     const target: Target = {
       id: `decoy-${Date.now()}-${Math.random()}`,
       x,
       y,
       type: 'decoy',
-      size: TARGET_SIZE,
+      size: targetSize,
       opacity: 1 // Start visible
     };
 
@@ -425,9 +442,11 @@ export class GameEngine {
   }
 
   moveAllTargets(gameWidth: number, gameHeight: number): void {
+    const { headerHeight } = getResponsiveSizes(gameWidth, gameHeight);
+
     this.targets.forEach((target, id) => {
       target.x = Math.random() * (gameWidth - target.size);
-      target.y = HEADER_HEIGHT + Math.random() * (gameHeight - HEADER_HEIGHT - target.size);
+      target.y = headerHeight + Math.random() * (gameHeight - headerHeight - target.size);
       this.targets.set(id, target);
     });
     // No notificamos para evitar sobrescritura - el estado React se actualiza directamente
