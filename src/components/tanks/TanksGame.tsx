@@ -68,18 +68,41 @@ export default function TanksGame() {
     const container = document.getElementById('tanks-canvas-container');
     if (!container) return;
 
-    // Set initial dimensions immediately
-    const rect = container.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      canvas.width = rect.width;
-      canvas.height = rect.height;
+    // Function to set canvas dimensions from container
+    const updateCanvasDimensions = () => {
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        canvas.width = rect.width;
+        canvas.height = rect.height;
 
-      const dimensions: CanvasDimensions = {
-        width: rect.width,
-        height: rect.height,
-      };
-      engineRef.current?.updateDimensions(dimensions);
-    }
+        const dimensions: CanvasDimensions = {
+          width: rect.width,
+          height: rect.height,
+        };
+        engineRef.current?.updateDimensions(dimensions);
+        return true;
+      }
+      return false;
+    };
+
+    // Set initial dimensions immediately
+    updateCanvasDimensions();
+
+    // Retry with RAF if dimensions were 0 (can happen on remount after orientation change)
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    const retryWithRAF = () => {
+      if (attempts >= maxAttempts) return;
+      attempts++;
+
+      if (!updateCanvasDimensions()) {
+        // Dimensions still 0, try again next frame
+        requestAnimationFrame(retryWithRAF);
+      }
+    };
+
+    requestAnimationFrame(retryWithRAF);
 
     // Create and attach ResizeObserver
     const resizeObserver = new ResizeObserver((entries) => {
@@ -102,6 +125,35 @@ export default function TanksGame() {
     resizeObserver.observe(container);
     resizeObserverRef.current = resizeObserver;
   }, []);
+
+  // Force canvas resize when rotating from portrait to landscape
+  useEffect(() => {
+    // Only trigger when switching FROM portrait TO landscape
+    // AND we're in a game state (not menu/setup)
+    if (!isPortrait && (screen === 'playing' || screen === 'exploding')) {
+      const canvas = canvasRef.current;
+      const container = document.getElementById('tanks-canvas-container');
+
+      if (canvas && container) {
+        // Small delay to ensure layout is stable after orientation change
+        const timeoutId = setTimeout(() => {
+          const rect = container.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const dimensions: CanvasDimensions = {
+              width: rect.width,
+              height: rect.height,
+            };
+            engineRef.current?.updateDimensions(dimensions);
+          }
+        }, 100);
+
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [isPortrait, screen]);
 
   // Game loop
   useEffect(() => {

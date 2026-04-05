@@ -7,7 +7,7 @@ export function BackToHub() {
   return (
     <Link
       href="/"
-      className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2
+      className="fixed bottom-4 left-4 z-50 flex items-center gap-2 px-4 py-2
                  bg-retro-surface/90 backdrop-blur-sm border border-gray-800
                  rounded-lg font-terminal text-sm text-retro-muted
                  hover:text-retro-text hover:border-neon-cyan transition-all"
