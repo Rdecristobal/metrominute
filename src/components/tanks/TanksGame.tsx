@@ -301,7 +301,7 @@ export default function TanksGame() {
   }, [mode, tankCount]);
 
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full relative overflow-hidden">
       {/* Menu screen */}
       {screen === 'menu' && <MenuScreen onSelectMode={handleSelectMode} />}
 

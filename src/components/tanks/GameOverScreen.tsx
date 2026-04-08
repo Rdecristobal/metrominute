@@ -22,7 +22,7 @@ export default function GameOverScreen({
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen p-4"
+      className="flex flex-col items-center justify-center h-full p-4"
       style={{ background: '#0a0a0f' }}
     >
       {/* Radial glow effect with winner color */}

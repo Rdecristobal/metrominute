@@ -22,7 +22,7 @@ export default function SetupScreen({
   const modeTitle = mode === 'ai' ? 'VS AI' : 'LOCAL MULTIPLAYER';
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="flex flex-col items-center justify-center h-full p-4" style={{ background: '#0a0a0f' }}>
       {/* Mode title */}
       <h2
         className="text-3xl font-bold font-mono mb-8"

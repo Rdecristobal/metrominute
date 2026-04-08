@@ -24,7 +24,7 @@ export default function GameScreen({
   const canFire = isPlayerTurn && !gameState.projectile?.active;
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#0a0a0f' }}>
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: '#0a0a0f' }}>
       {/* Top HUD — compact info */}
       <div
         className="flex items-center justify-between px-3 flex-shrink-0"
@@ -72,7 +72,7 @@ export default function GameScreen({
         style={{
           background: '#0f0f18',
           borderTop: '1px solid #1a1a2e',
-          minHeight: '72px',
+          minHeight: '56px',
         }}
       >
         {/* Left side: tank status */}
@@ -114,7 +114,7 @@ export default function GameScreen({
             onPointerDown={onFireStart}
             onPointerUp={onFireEnd}
             onPointerLeave={onFireEnd}
-            className="px-6 py-3 font-black text-base rounded-lg transition-all hover:scale-105 active:scale-95 flex-shrink-0 select-none"
+            className="px-5 py-2 font-black text-sm rounded-lg transition-all hover:scale-105 active:scale-95 flex-shrink-0 select-none"
             style={{
               background: activeTank?.color || '#ff2d78',
               color: 'black',

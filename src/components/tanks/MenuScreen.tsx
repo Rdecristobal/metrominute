@@ -8,7 +8,7 @@ interface MenuScreenProps {
 
 export default function MenuScreen({ onSelectMode }: MenuScreenProps) {
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen p-4 font-mono bg-black overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center h-full p-4 font-mono bg-black overflow-hidden">
       {/* Star grid background (Tron-like) */}
       <div
         className="absolute inset-0 opacity-20"
