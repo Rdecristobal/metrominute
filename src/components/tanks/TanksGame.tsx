@@ -231,7 +231,7 @@ export default function TanksGame() {
       const canvasX = e.clientX - rect.left;
       const canvasY = e.clientY - rect.top;
       const mm = getMinimapBounds({ width: rect.width, height: rect.height });
-      const pad = 6; // Extra touch target
+      const pad = 20; // Extra touch target for mobile
 
       if (
         canvasX >= mm.x - pad && canvasX <= mm.x + mm.width + pad &&
