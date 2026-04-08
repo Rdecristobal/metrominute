@@ -476,6 +476,17 @@ function renderMinimap(
   });
 }
 
+// ─── Minimap Bounds (exported for click detection) ─────────────
+
+export function getMinimapBounds(canvasDimensions: CanvasDimensions): { x: number; y: number; width: number; height: number } {
+  return {
+    x: canvasDimensions.width - MINIMAP_WIDTH - 8,
+    y: canvasDimensions.height - MINIMAP_HEIGHT - 8,
+    width: MINIMAP_WIDTH,
+    height: MINIMAP_HEIGHT,
+  };
+}
+
 // ─── Cache Control ──────────────────────────────────────────────
 
 export function clearStarsCache(): void {

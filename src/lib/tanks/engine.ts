@@ -44,6 +44,7 @@ export class TanksEngine {
   private aiHasProgrammedShot: boolean = false;
   private previousDimensions: CanvasDimensions | null = null;
   private lastAITargetId: number | null = null;
+  private cameraOverride: boolean = false;
   private config: GameConfig;
 
   constructor(config: GameConfig, dimensions: CanvasDimensions = { width: 800, height: 600 }) {
@@ -70,6 +71,7 @@ export class TanksEngine {
   // ─── Camera ────────────────────────────────────────────────────
 
   private updateCamera(): void {
+    if (this.cameraOverride) return;
     const viewport = this.state.viewport;
     if (!viewport) return;
     const activeTank = this.state.tanks[this.state.activeTankIndex];
@@ -600,6 +602,23 @@ export class TanksEngine {
     this.notify();
   }
 
+  // ─── Camera: Minimap click/drag ────────────────────────────────
+
+  setCameraPosition(worldX: number): void {
+    const viewport = this.state.viewport;
+    if (!viewport) return;
+    if (this.state.projectile?.active) return;
+
+    this.cameraOverride = true;
+    viewport.x = worldX - viewport.width / 2;
+    // Clamp
+    viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
+  }
+
+  clearCameraOverride(): void {
+    this.cameraOverride = false;
+  }
+
   // ─── Camera Pan (swipe exploration) ────────────────────────────
 
   panCamera(worldDeltaX: number): void {
@@ -611,6 +630,10 @@ export class TanksEngine {
   }
 
   // ─── Testing ───────────────────────────────────────────────────
+
+  isProjectileActive(): boolean {
+    return !!this.state.projectile?.active;
+  }
 
   executeAIShot(): void {
     const activeTank = this.state.tanks[this.state.activeTankIndex];

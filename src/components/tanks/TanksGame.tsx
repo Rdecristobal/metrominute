@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { GameMode, GamePhase, GameState, CanvasDimensions } from '@/lib/tanks/types';
 import { TanksEngine } from '@/lib/tanks/engine';
-import { renderGame } from '@/lib/tanks/renderer';
+import { renderGame, getMinimapBounds } from '@/lib/tanks/renderer';
 import { MIN_POWER, MAX_POWER, PAN_THRESHOLD, PAN_SPEED_FACTOR } from '@/lib/tanks/constants';
 import MenuScreen from './MenuScreen';
 import SetupScreen from './SetupScreen';
@@ -29,6 +29,7 @@ export default function TanksGame() {
   const pointerStartXRef = useRef<number | null>(null);
   const lastPointerXRef = useRef<number | null>(null);
   const isPanningRef = useRef(false);
+  const isMinimapDragRef = useRef(false);
 
   // Initialize engine
   useEffect(() => {
@@ -217,11 +218,33 @@ export default function TanksGame() {
     setScreen('menu');
   }, []);
 
-  // Pointer handlers for aiming + swipe camera pan
+  // Pointer handlers for aiming + swipe camera pan + minimap interaction
   const handleCanvasPointerDown = useCallback((e: React.PointerEvent) => {
     const engine = engineRef.current;
     if (!engine) return;
     const state = engine.getState();
+
+    // Check minimap click first
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = e.clientX - rect.left;
+      const canvasY = e.clientY - rect.top;
+      const mm = getMinimapBounds({ width: rect.width, height: rect.height });
+      const pad = 6; // Extra touch target
+
+      if (
+        canvasX >= mm.x - pad && canvasX <= mm.x + mm.width + pad &&
+        canvasY >= mm.y - pad && canvasY <= mm.y + mm.height + pad &&
+        !state.projectile?.active
+      ) {
+        isMinimapDragRef.current = true;
+        const worldX = ((canvasX - mm.x) / mm.width) * (state.viewport?.worldWidth ?? rect.width);
+        engine.setCameraPosition(worldX);
+        return;
+      }
+    }
+
     const activeTank = state.tanks[state.activeTankIndex];
     if (!activeTank || activeTank.isAI || !activeTank.alive) return;
     if (state.projectile?.active) return;
@@ -232,7 +255,6 @@ export default function TanksGame() {
     isPanningRef.current = false;
 
     // Start aiming immediately (will be overridden by pan if swipe detected)
-    const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     engine.setAngleFromPosition(activeTank.id, e.clientX, e.clientY, rect);
@@ -242,6 +264,19 @@ export default function TanksGame() {
     const engine = engineRef.current;
     if (!engine) return;
     const state = engine.getState();
+
+    // Handle minimap drag
+    if (isMinimapDragRef.current) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = e.clientX - rect.left;
+      const mm = getMinimapBounds({ width: rect.width, height: rect.height });
+      const worldX = ((canvasX - mm.x) / mm.width) * (state.viewport?.worldWidth ?? rect.width);
+      engine.setCameraPosition(worldX);
+      return;
+    }
+
     const activeTank = state.tanks[state.activeTankIndex];
     if (!activeTank || activeTank.isAI || !activeTank.alive) return;
     if (state.projectile?.active) return;
@@ -273,6 +308,10 @@ export default function TanksGame() {
   }, []);
 
   const handleCanvasPointerUp = useCallback(() => {
+    if (isMinimapDragRef.current) {
+      engineRef.current?.clearCameraOverride();
+      isMinimapDragRef.current = false;
+    }
     pointerStartXRef.current = null;
     lastPointerXRef.current = null;
     isPanningRef.current = false;
