@@ -7,6 +7,19 @@ export const TERRAIN_FLAT_PROBABILITY = 0.15;
 export const TERRAIN_FLAT_MIN_SEGMENT = 3;
 export const TERRAIN_FLAT_MAX_SEGMENT = 57;
 
+// Landscape UI
+export const LANDSCAPE_HUD_HEIGHT = 24;
+export const LANDSCAPE_CONTROLS_HEIGHT = 40;
+export const TERRAIN_AMP_SCALE_FACTOR = 0.7;
+
+// World / Viewport
+export const WORLD_SCALE_PORTRAIT = 2.5;
+export const WORLD_SCALE_LANDSCAPE = 1.5;
+export const CAMERA_SMOOTHING = 0.08;
+export const CAMERA_PROJECTILE_SMOOTHING = 0.06;
+export const MINIMAP_WIDTH = 120;
+export const MINIMAP_HEIGHT = 20;
+
 // Terrain waves (frequency, amplitude)
 export const TERRAIN_WAVES = [
   { freq: 1.0, amp: 0.12 },  // Large hills

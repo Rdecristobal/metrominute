@@ -1,4 +1,4 @@
-import { GameState, GameConfig, Tank, GamePhase, Particle, Explosion, CanvasDimensions } from './types';
+import { GameState, GameConfig, Tank, GamePhase, Particle, Explosion, CanvasDimensions, Viewport, AIDifficulty } from './types';
 import { TANK_COLORS, TANK_NAMES } from './types';
 import {
   TANK_LEFT_ANGLE,
@@ -6,6 +6,7 @@ import {
   TANK_MARGIN_RATIO,
   TANK_HEIGHT,
   TANK_DEFAULT_POWER,
+  TANK_BARREL_LENGTH,
   MIN_ANGLE,
   MAX_ANGLE,
   MIN_POWER,
@@ -24,10 +25,14 @@ import {
   EXPLOSION_PARTICLE_MIN_G,
   EXPLOSION_PARTICLE_MAX_G,
   EXPLOSION_PARTICLE_B,
+  WORLD_SCALE_PORTRAIT,
+  WORLD_SCALE_LANDSCAPE,
+  CAMERA_SMOOTHING,
+  CAMERA_PROJECTILE_SMOOTHING,
 } from './constants';
-import { generateTerrain, deformTerrain, getTerrainY, getTankPosition, generateStars } from './terrain';
+import { generateTerrain, deformTerrain, getTerrainY, getTankPosition } from './terrain';
 import { createProjectile, updateProjectile, checkCollision, isTankInRange } from './physics';
-import { getAITarget, calculateAIShot, shouldAIFire } from './ai';
+import { getAITarget, calculateAIShot, shouldAIFire, updateAIMemory, resetAIMemories } from './ai';
 import { clearStarsCache } from './renderer';
 
 export class TanksEngine {
@@ -38,22 +43,81 @@ export class TanksEngine {
   private aiShotDelayTimer: number | null = null;
   private aiHasProgrammedShot: boolean = false;
   private previousDimensions: CanvasDimensions | null = null;
+  private lastAITargetId: number | null = null;
+  private config: GameConfig;
 
   constructor(config: GameConfig, dimensions: CanvasDimensions = { width: 800, height: 600 }) {
     this.dimensions = dimensions;
+    this.config = config;
     this.state = this.createInitialState(config);
   }
 
-  // Create initial game state
-  private createInitialState(config: GameConfig): GameState {
-    // Generate terrain
-    const terrain = generateTerrain(this.dimensions);
+  // ─── World & Viewport helpers ──────────────────────────────────
 
-    // Create tanks
-    const tanks = this.createTanks(config, terrain);
+  private calcWorldSize(dimensions: CanvasDimensions): { worldWidth: number; worldHeight: number } {
+    const aspectRatio = dimensions.width / dimensions.height;
+    const worldWidth = aspectRatio < 1
+      ? dimensions.width * WORLD_SCALE_PORTRAIT
+      : dimensions.width * WORLD_SCALE_LANDSCAPE;
+    return { worldWidth, worldHeight: dimensions.height };
+  }
+
+  // ─── Camera ────────────────────────────────────────────────────
+
+  private updateCamera(): void {
+    const viewport = this.state.viewport;
+    if (!viewport) return;
+    const activeTank = this.state.tanks[this.state.activeTankIndex];
+    if (!activeTank) return;
+
+    let targetX: number;
+
+    if (this.state.projectile?.active) {
+      // Split-focus between tank and projectile
+      const midX = (activeTank.x + this.state.projectile.x) / 2;
+      targetX = midX - viewport.width / 2;
+      viewport.x += (targetX - viewport.x) * CAMERA_PROJECTILE_SMOOTHING;
+    } else {
+      // Follow active tank
+      targetX = activeTank.x - viewport.width / 2;
+      viewport.x += (targetX - viewport.x) * CAMERA_SMOOTHING;
+    }
+
+    // Clamp
+    viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
+  }
+
+  // ─── State Creation ────────────────────────────────────────────
+
+  private createInitialState(config: GameConfig): GameState {
+    const { worldWidth, worldHeight } = this.calcWorldSize(this.dimensions);
+
+    // Generate terrain for the full world
+    const terrain = generateTerrain({ width: worldWidth, height: worldHeight });
+
+    // Create tanks distributed across world width
+    const tanks = this.createTanks(config, terrain, worldWidth);
 
     // Initial wind
     const wind = WIND_MIN + Math.random() * (WIND_MAX - WIND_MIN);
+
+    // Viewport: initially center on first tank
+    const viewport: Viewport = {
+      x: 0,
+      y: 0,
+      width: this.dimensions.width,
+      height: this.dimensions.height,
+      worldWidth,
+      worldHeight,
+    };
+
+    // Center viewport on first tank
+    if (tanks.length > 0) {
+      viewport.x = Math.max(0, Math.min(
+        worldWidth - viewport.width,
+        tanks[0].x - viewport.width / 2
+      ));
+    }
 
     return {
       phase: 'menu',
@@ -67,14 +131,14 @@ export class TanksEngine {
       wind,
       winner: null,
       isDraw: false,
+      viewport,
     };
   }
 
-  // Create tanks for the game
-  private createTanks(config: GameConfig, terrain: Array<{ x: number; y: number }>): Tank[] {
+  private createTanks(config: GameConfig, terrain: Array<{ x: number; y: number }>, worldWidth: number): Tank[] {
     const tanks: Tank[] = [];
-    const margin = this.dimensions.width * TANK_MARGIN_RATIO;
-    const playableWidth = this.dimensions.width - (margin * 2);
+    const margin = worldWidth * TANK_MARGIN_RATIO;
+    const playableWidth = worldWidth - (margin * 2);
     const spacing = playableWidth / (config.tankCount + 1);
 
     for (let i = 0; i < config.tankCount; i++) {
@@ -87,7 +151,7 @@ export class TanksEngine {
       const isAI = config.mode === 'ai' && i > 0;
 
       // Initial angle: left-facing tanks aim left, right-facing aim right
-      const angle = x < this.dimensions.width / 2 ? TANK_LEFT_ANGLE : TANK_RIGHT_ANGLE;
+      const angle = x < worldWidth / 2 ? TANK_LEFT_ANGLE : TANK_RIGHT_ANGLE;
 
       tanks.push({
         id: i,
@@ -105,12 +169,12 @@ export class TanksEngine {
     return tanks;
   }
 
-  // Get current game state (read-only)
+  // ─── Public API ────────────────────────────────────────────────
+
   getState(): Readonly<GameState> {
     return { ...this.state };
   }
 
-  // Subscribe to state changes
   subscribe(callback: (state: GameState) => void): () => void {
     this.subscribers.push(callback);
     return () => {
@@ -118,12 +182,10 @@ export class TanksEngine {
     };
   }
 
-  // Notify all subscribers of state change
   private notify(): void {
     this.subscribers.forEach(cb => cb({ ...this.state }));
   }
 
-  // Reset the game
   reset(): void {
     this.state = this.createInitialState({
       mode: this.state.mode,
@@ -131,6 +193,7 @@ export class TanksEngine {
     });
     this.aiThinkingFrames = 0;
     this.aiHasProgrammedShot = false;
+    this.lastAITargetId = null;
     if (this.aiShotDelayTimer) {
       clearTimeout(this.aiShotDelayTimer);
       this.aiShotDelayTimer = null;
@@ -139,18 +202,19 @@ export class TanksEngine {
     this.notify();
   }
 
-  // Set game phase
   setPhase(phase: GamePhase): void {
     this.state.phase = phase;
     this.notify();
   }
 
-  // Start game with given config
   startGame(config: GameConfig): void {
+    this.config = config;
     this.state = this.createInitialState(config);
     this.state.phase = 'playing';
     this.aiThinkingFrames = 0;
     this.aiHasProgrammedShot = false;
+    this.lastAITargetId = null;
+    resetAIMemories();
     clearStarsCache();
     this.notify();
 
@@ -161,27 +225,20 @@ export class TanksEngine {
     }
   }
 
-  // Set tank angle
   setTankAngle(tankId: number, angle: number): void {
     const tank = this.state.tanks.find(t => t.id === tankId);
     if (!tank) return;
-
-    // Clamp angle
     tank.angle = Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, angle));
     this.notify();
   }
 
-  // Set tank power
   setTankPower(tankId: number, power: number): void {
     const tank = this.state.tanks.find(t => t.id === tankId);
     if (!tank) return;
-
-    // Clamp power
     tank.power = Math.max(MIN_POWER, Math.min(MAX_POWER, power));
     this.notify();
   }
 
-  // Fire projectile
   fire(): void {
     if (this.state.phase !== 'playing' || this.state.projectile?.active) return;
 
@@ -192,7 +249,6 @@ export class TanksEngine {
     this.notify();
   }
 
-  // Update game state (called each frame)
   update(): void {
     if (this.state.phase === 'playing') {
       this.updatePlaying();
@@ -201,8 +257,12 @@ export class TanksEngine {
     }
   }
 
-  // Update playing phase
+  // ─── Update Loop ───────────────────────────────────────────────
+
   private updatePlaying(): void {
+    // Update camera
+    this.updateCamera();
+
     // Check AI turn
     const activeTank = this.state.tanks[this.state.activeTankIndex];
     if (activeTank && activeTank.isAI && !this.state.projectile?.active) {
@@ -213,28 +273,41 @@ export class TanksEngine {
     if (this.state.projectile?.active) {
       updateProjectile(this.state.projectile, this.state.wind, this.dimensions);
 
-      // Check collision
-      const collision = checkCollision(this.state.projectile, this.state.terrain, this.dimensions);
+      // Check collision using world dimensions
+      const worldWidth = this.state.viewport?.worldWidth ?? this.dimensions.width;
+      const worldHeight = this.state.viewport?.worldHeight ?? this.dimensions.height;
+      const collision = checkCollision(
+        this.state.projectile,
+        this.state.terrain,
+        { width: worldWidth, height: worldHeight }
+      );
       if (collision.collided) {
         this.handleExplosion(collision.x, collision.y);
       }
     }
   }
 
-  // Update AI logic
+  // ─── AI Logic ──────────────────────────────────────────────────
+
   private updateAI(): void {
     this.aiThinkingFrames++;
 
     if (shouldAIFire(this.aiThinkingFrames) && !this.aiHasProgrammedShot) {
-      // Calculate shot after thinking delay
-      const target = getAITarget(this.state, this.state.tanks[this.state.activeTankIndex]);
+      const shooterTank = this.state.tanks[this.state.activeTankIndex];
+      const target = getAITarget(this.state, shooterTank);
       if (target) {
-        const shot = calculateAIShot(this.state.tanks[this.state.activeTankIndex], target, this.state.wind);
+        const difficulty: AIDifficulty = this.config.aiDifficulty ?? 'normal';
+        const worldWidth = this.state.viewport?.worldWidth ?? this.dimensions.width;
+        const worldHeight = this.state.viewport?.worldHeight ?? this.dimensions.height;
 
-        // Mark that we've programmed a shot to prevent multiple setTimeout calls
+        const shot = calculateAIShot(
+          shooterTank, target, this.state.wind,
+          this.state.terrain, worldWidth, worldHeight, difficulty
+        );
+
+        this.lastAITargetId = target.id;
         this.aiHasProgrammedShot = true;
 
-        // Apply AI shot after additional delay
         if (this.aiShotDelayTimer) {
           clearTimeout(this.aiShotDelayTimer);
         }
@@ -250,14 +323,16 @@ export class TanksEngine {
     }
   }
 
-  // Start AI thinking
   private startAIThinking(): void {
     this.aiThinkingFrames = 0;
     this.aiHasProgrammedShot = false;
   }
 
-  // Handle explosion
+  // ─── Explosions ────────────────────────────────────────────────
+
   private handleExplosion(x: number, y: number): void {
+    const shooterTank = this.state.tanks[this.state.activeTankIndex];
+
     // Deactivate projectile
     if (this.state.projectile) {
       this.state.projectile.active = false;
@@ -274,7 +349,6 @@ export class TanksEngine {
     this.state.tanks.forEach(tank => {
       if (tank.alive && isTankInRange(tank, x, y, EXPLOSION_RADIUS)) {
         tank.alive = false;
-        // Create secondary explosion at tank position
         const tankExplosion = this.createExplosion(tank.x, tank.y);
         this.state.explosions.push(tankExplosion);
       }
@@ -283,17 +357,32 @@ export class TanksEngine {
     // Recalculate Y positions for alive tanks
     this.state.tanks.forEach(tank => {
       if (tank.alive) {
-        const { y } = getTankPosition(this.state.terrain, tank.x);
-        tank.y = y;
+        const { y: newY } = getTankPosition(this.state.terrain, tank.x);
+        tank.y = newY;
       }
     });
 
-    // Change phase to exploding
+    // Update AI memory
+    if (shooterTank.isAI && this.lastAITargetId !== null) {
+      const target = this.state.tanks.find(t => t.id === this.lastAITargetId);
+      if (target) {
+        updateAIMemory(
+          shooterTank.id,
+          target.id,
+          shooterTank.angle,
+          shooterTank.power,
+          x, y,
+          target.x, target.y
+        );
+      }
+      this.lastAITargetId = null;
+    }
+
+    // Change phase
     this.state.phase = 'exploding';
     this.notify();
   }
 
-  // Create explosion
   private createExplosion(x: number, y: number): Explosion {
     const particles: Particle[] = [];
 
@@ -322,18 +411,16 @@ export class TanksEngine {
     };
   }
 
-  // Update exploding phase
   private updateExploding(): void {
     let allFinished = true;
 
     this.state.explosions.forEach(explosion => {
       explosion.frame++;
 
-      // Update particles
       explosion.particles.forEach(particle => {
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vy += 0.15; // Gravity
+        particle.vy += 0.15;
         particle.life -= 0.02;
       });
 
@@ -350,7 +437,6 @@ export class TanksEngine {
     this.notify();
   }
 
-  // Move to next turn
   private nextTurn(): void {
     // Update wind
     this.state.wind += WIND_CHANGE_MIN + Math.random() * (WIND_CHANGE_MAX - WIND_CHANGE_MIN);
@@ -380,7 +466,6 @@ export class TanksEngine {
     this.state.activeTankIndex = nextIndex;
     this.state.phase = 'playing';
 
-    // Reset AI thinking if next tank is AI
     if (this.state.tanks[nextIndex].isAI) {
       this.startAIThinking();
     }
@@ -388,12 +473,12 @@ export class TanksEngine {
     this.notify();
   }
 
-  // Get terrain Y at X
+  // ─── Queries ───────────────────────────────────────────────────
+
   getTerrainY(x: number): number {
     return getTerrainY(this.state.terrain, x);
   }
 
-  // Get terrain angle at X
   getTerrainAngle(x: number): number {
     const offset = 3;
     const y1 = getTerrainY(this.state.terrain, x - offset);
@@ -401,22 +486,58 @@ export class TanksEngine {
     return Math.atan2(y2 - y1, offset * 2);
   }
 
-  // Check if position is valid (for collision detection)
   isPositionValid(x: number, y: number): boolean {
     return y < this.getTerrainY(x);
   }
 
-  // Update canvas dimensions
+  isAnimating(): boolean {
+    return this.state.phase === 'playing' || this.state.phase === 'exploding';
+  }
+
+  getAITarget(): Tank | null {
+    const activeTank = this.state.tanks[this.state.activeTankIndex];
+    if (!activeTank || !activeTank.isAI) return null;
+    return getAITarget(this.state, activeTank);
+  }
+
+  // ─── Dimensions / Resize ───────────────────────────────────────
+
   updateDimensions(dimensions: CanvasDimensions): void {
     this.dimensions = dimensions;
 
-    // Only regenerate terrain if previous dimensions were invalid (0x0)
-    // Otherwise, scale terrain points proportionally to preserve deformations
+    const viewport = this.state.viewport;
+    if (viewport) {
+      // Update viewport canvas dimensions (world stays the same)
+      viewport.width = dimensions.width;
+      viewport.height = dimensions.height;
+
+      // Clamp camera position
+      viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
+    }
+
+    // Scale terrain points proportionally to preserve deformations
     if (!this.previousDimensions || this.previousDimensions.width === 0 || this.previousDimensions.height === 0) {
-      // Initial terrain generation or previous dimensions were invalid
-      this.state.terrain = generateTerrain(dimensions);
+      // Full regeneration needed (we can't because we'd lose world scale)
+      // Instead, recalculate world and regenerate terrain
+      const { worldWidth, worldHeight } = this.calcWorldSize(dimensions);
+      this.state.terrain = generateTerrain({ width: worldWidth, height: worldHeight });
+
+      // Update viewport world size
+      if (viewport) {
+        viewport.worldWidth = worldWidth;
+        viewport.worldHeight = worldHeight;
+        viewport.x = Math.max(0, Math.min(worldWidth - viewport.width, viewport.x));
+      }
+
+      // Redistribute tanks across new world
+      const margin = worldWidth * TANK_MARGIN_RATIO;
+      const playableWidth = worldWidth - (margin * 2);
+      const spacing = playableWidth / (this.state.tankCount + 1);
+      this.state.tanks.forEach((tank, i) => {
+        tank.x = margin + spacing * (i + 1);
+      });
     } else {
-      // Scale terrain points proportionally to preserve deformations
+      // Proportional scaling
       const scaleX = dimensions.width / this.previousDimensions.width;
       const scaleY = dimensions.height / this.previousDimensions.height;
 
@@ -424,12 +545,23 @@ export class TanksEngine {
         x: point.x * scaleX,
         y: point.y * scaleY,
       }));
+
+      // Scale tank X positions
+      this.state.tanks.forEach(tank => {
+        tank.x *= scaleX;
+      });
+
+      // Update viewport
+      if (viewport) {
+        viewport.worldWidth *= scaleX;
+        viewport.worldHeight *= scaleY;
+        viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
+      }
     }
 
-    // Store current dimensions for next update
     this.previousDimensions = { ...dimensions };
 
-    // Recalculate tank positions
+    // Recalculate tank Y positions
     this.state.tanks.forEach(tank => {
       const { y } = getTankPosition(this.state.terrain, tank.x);
       tank.y = y;
@@ -439,44 +571,33 @@ export class TanksEngine {
     this.notify();
   }
 
-  // Check if currently animating
-  isAnimating(): boolean {
-    return this.state.phase === 'playing' || this.state.phase === 'exploding';
-  }
+  // ─── Touch / Aim ───────────────────────────────────────────────
 
-  // Set angle from touch/pointer position
   setAngleFromPosition(tankId: number, touchX: number, touchY: number, canvasRect: DOMRect): void {
     const tank = this.state.tanks.find(t => t.id === tankId);
     if (!tank || tank.isAI || !tank.alive) return;
     if (this.state.projectile?.active) return;
 
-    // Convert touch position to canvas coordinates
-    const canvasX = touchX - canvasRect.left;
+    // Convert touch position to canvas coordinates + camera offset
+    const camX = this.state.viewport?.x ?? 0;
+    const canvasX = (touchX - canvasRect.left) + camX;
     const canvasY = touchY - canvasRect.top;
 
     // Calculate angle from tank to touch point
-    // Tank center for aim: (tank.x, tank.y - TANK_HEIGHT)
     const aimOriginX = tank.x;
     const aimOriginY = tank.y - TANK_HEIGHT;
 
     const angleRad = Math.atan2(canvasY - aimOriginY, canvasX - aimOriginX);
     let angleDeg = angleRad * (180 / Math.PI);
 
-    // Clamp to valid range (-175 to -5, only upward angles)
     angleDeg = Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, angleDeg));
 
     tank.angle = angleDeg;
     this.notify();
   }
 
-  // Get AI target (for debugging/testing)
-  getAITarget(): Tank | null {
-    const activeTank = this.state.tanks[this.state.activeTankIndex];
-    if (!activeTank || !activeTank.isAI) return null;
-    return getAITarget(this.state, activeTank);
-  }
+  // ─── Testing ───────────────────────────────────────────────────
 
-  // Execute AI shot immediately (for testing)
   executeAIShot(): void {
     const activeTank = this.state.tanks[this.state.activeTankIndex];
     if (!activeTank || !activeTank.isAI) return;
@@ -484,7 +605,14 @@ export class TanksEngine {
     const target = getAITarget(this.state, activeTank);
     if (!target) return;
 
-    const shot = calculateAIShot(activeTank, target, this.state.wind);
+    const difficulty: AIDifficulty = this.config.aiDifficulty ?? 'normal';
+    const worldWidth = this.state.viewport?.worldWidth ?? this.dimensions.width;
+    const worldHeight = this.state.viewport?.worldHeight ?? this.dimensions.height;
+
+    const shot = calculateAIShot(
+      activeTank, target, this.state.wind,
+      this.state.terrain, worldWidth, worldHeight, difficulty
+    );
     activeTank.angle = shot.angle;
     activeTank.power = shot.power;
     this.fire();

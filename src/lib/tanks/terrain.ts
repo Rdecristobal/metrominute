@@ -8,6 +8,7 @@ import {
   TERRAIN_FLAT_MIN_SEGMENT,
   TERRAIN_FLAT_MAX_SEGMENT,
   TERRAIN_WAVES,
+  TERRAIN_AMP_SCALE_FACTOR,
   STAR_SEED,
   EXPLOSION_RADIUS,
   EXPLOSION_DEFORMATION_FACTOR,
@@ -36,25 +37,39 @@ export function generateTerrain(dimensions: CanvasDimensions, seed?: number): Te
   const { width, height } = dimensions;
   const rng = seed ? new SeededRandom(seed) : { next: Math.random, nextInRange: (min: number, max: number) => min + Math.random() * (max - min) };
 
+  const aspectRatio = width / height;
+
+  // Adjust point count for landscape
+  const pointCount = aspectRatio > 1.5
+    ? Math.round(TERRAIN_POINTS * aspectRatio * 0.8)
+    : TERRAIN_POINTS;
+
+  // Scale amplitudes for landscape so hills aren't flattened
+  const ampScale = Math.max(1, aspectRatio * TERRAIN_AMP_SCALE_FACTOR);
+
   const points: TerrainPoint[] = [];
   const baseY = height * TERRAIN_BASE_Y_RATIO;
   const minY = height * TERRAIN_MIN_Y_RATIO;
   const maxY = height * TERRAIN_MAX_Y_RATIO;
   const phase = rng.nextInRange(0, Math.PI * 2);
 
-  const segmentWidth = width / (TERRAIN_POINTS - 1);
+  const segmentWidth = width / (pointCount - 1);
 
-  for (let i = 0; i < TERRAIN_POINTS; i++) {
+  // Adjust flat segment bounds for dynamic point count
+  const flatMin = Math.max(3, Math.floor(pointCount * 0.05));
+  const flatMax = Math.min(pointCount - 4, Math.floor(pointCount * 0.95));
+
+  for (let i = 0; i < pointCount; i++) {
     const x = i * segmentWidth;
     let y = baseY;
 
-    // Add wave layers
+    // Add wave layers with amplitude scaling
     for (const wave of TERRAIN_WAVES) {
-      y += Math.sin(x * (wave.freq * 2 * Math.PI / width) + phase) * height * wave.amp;
+      y += Math.sin(x * (wave.freq * 2 * Math.PI / width) + phase) * height * wave.amp * ampScale;
     }
 
     // 15% chance of flat area (except at edges)
-    if (i >= TERRAIN_FLAT_MIN_SEGMENT && i <= TERRAIN_FLAT_MAX_SEGMENT) {
+    if (i >= flatMin && i <= flatMax) {
       if (rng.next() < TERRAIN_FLAT_PROBABILITY && i > 0) {
         y = points[i - 1].y;
       }

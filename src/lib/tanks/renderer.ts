@@ -1,4 +1,4 @@
-import { GameState, Tank, CanvasDimensions } from './types';
+import { GameState, Tank, CanvasDimensions, Viewport } from './types';
 import {
   SKY_TOP,
   SKY_MID,
@@ -22,21 +22,16 @@ import {
   TRAIL_COLOR,
   EXPLOSION_DURATION_FRAMES,
   EXPLOSION_RADIUS,
-  EXPLOSION_PARTICLE_COUNT,
-  EXPLOSION_PARTICLE_MIN_SIZE,
-  EXPLOSION_PARTICLE_MAX_SIZE,
-  EXPLOSION_PARTICLE_MIN_R,
-  EXPLOSION_PARTICLE_MAX_R,
-  EXPLOSION_PARTICLE_MIN_G,
-  EXPLOSION_PARTICLE_MAX_G,
-  EXPLOSION_PARTICLE_B,
+  MINIMAP_WIDTH,
+  MINIMAP_HEIGHT,
 } from './constants';
 import { calculateTrajectory } from './physics';
 
 // Stars cache
 let starsCache: Array<{ x: number; y: number; radius: number; opacity: number }> | null = null;
 
-// Render the complete game frame
+// ─── Main Render ────────────────────────────────────────────────
+
 export function renderGame(
   ctx: CanvasRenderingContext2D,
   state: GameState,
@@ -44,50 +39,63 @@ export function renderGame(
   showTrajectory: boolean = false
 ): void {
   const { width, height } = dimensions;
+  const viewport = state.viewport;
+  const camX = viewport ? viewport.x : 0;
 
   // Clear canvas
   ctx.clearRect(0, 0, width, height);
 
-  // Render sky with gradient
+  // Render sky (full screen, no offset)
   renderSky(ctx, dimensions);
 
-  // Render stars
+  // Render stars (full screen, no offset — they're a backdrop)
   renderStars(ctx, dimensions);
 
-  // Render terrain
-  renderTerrain(ctx, state.terrain, dimensions);
+  // Apply camera offset for world-space rendering
+  ctx.save();
+  ctx.translate(-camX, 0);
 
-  // Render tanks
+  // Render terrain (world coordinates)
+  renderTerrain(ctx, state.terrain, viewport);
+
+  // Render tanks (world coordinates)
   state.tanks.forEach(tank => {
-    renderTank(ctx, tank, state.activeTankIndex === tank.id, state.phase);
+    renderTank(ctx, tank, state.activeTankIndex === tank.id, state.phase, viewport);
   });
 
-  // Render trajectory (human player turn only)
+  // Render trajectory (human player, world coordinates)
   if (showTrajectory && state.phase === 'playing' && !state.projectile?.active) {
     const activeTank = state.tanks[state.activeTankIndex];
     if (activeTank && !activeTank.isAI && activeTank.alive) {
-      renderTrajectory(ctx, activeTank, state.wind, dimensions);
+      renderTrajectory(ctx, activeTank, state.wind, viewport, dimensions);
     }
   }
 
-  // Render projectile
+  // Render projectile (world coordinates)
   if (state.projectile && state.projectile.active) {
     renderProjectile(ctx, state.projectile);
   }
 
-  // Render explosions
+  // Render explosions (world coordinates)
   state.explosions.forEach(explosion => {
     renderExplosion(ctx, explosion, dimensions);
   });
 
-  // Render wind indicator
-  renderWindIndicator(ctx, state.wind, dimensions);
+  ctx.restore();
 
-  // Render tank count
+  // ─── HUD overlay (screen coordinates, no camera offset) ───
+
+  renderWindIndicator(ctx, state.wind, dimensions);
   renderTankCount(ctx, state, dimensions);
+
+  // Minimap
+  if (viewport) {
+    renderMinimap(ctx, state, viewport, dimensions);
+  }
 }
 
-// Render sky gradient
+// ─── Sky ────────────────────────────────────────────────────────
+
 function renderSky(ctx: CanvasRenderingContext2D, dimensions: CanvasDimensions): void {
   const { width, height } = dimensions;
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -98,9 +106,9 @@ function renderSky(ctx: CanvasRenderingContext2D, dimensions: CanvasDimensions):
   ctx.fillRect(0, 0, width, height);
 }
 
-// Render stars
+// ─── Stars ──────────────────────────────────────────────────────
+
 function renderStars(ctx: CanvasRenderingContext2D, dimensions: CanvasDimensions): void {
-  // Generate stars once and cache
   if (!starsCache) {
     starsCache = generateStars(dimensions);
   }
@@ -115,7 +123,6 @@ function renderStars(ctx: CanvasRenderingContext2D, dimensions: CanvasDimensions
   ctx.globalAlpha = 1;
 }
 
-// Generate stars (pseudo-random)
 function generateStars(dimensions: CanvasDimensions): Array<{ x: number; y: number; radius: number; opacity: number }> {
   const stars: Array<{ x: number; y: number; radius: number; opacity: number }> = [];
   let seed = 42;
@@ -139,14 +146,20 @@ function generateStars(dimensions: CanvasDimensions): Array<{ x: number; y: numb
   return stars;
 }
 
-// Render terrain
-function renderTerrain(ctx: CanvasRenderingContext2D, terrain: Array<{ x: number; y: number }>, dimensions: CanvasDimensions): void {
-  const { width, height } = dimensions;
+// ─── Terrain ────────────────────────────────────────────────────
 
+function renderTerrain(
+  ctx: CanvasRenderingContext2D,
+  terrain: Array<{ x: number; y: number }>,
+  viewport?: Viewport
+): void {
   if (terrain.length === 0) return;
 
+  const worldHeight = viewport?.worldHeight ?? 600;
+  const worldWidth = viewport?.worldWidth ?? terrain[terrain.length - 1].x;
+
   // Create gradient for terrain fill
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  const gradient = ctx.createLinearGradient(0, 0, 0, worldHeight);
   TERRAIN_COLORS.forEach((color, i) => {
     gradient.addColorStop(i / (TERRAIN_COLORS.length - 1), color);
   });
@@ -157,13 +170,13 @@ function renderTerrain(ctx: CanvasRenderingContext2D, terrain: Array<{ x: number
   for (let i = 1; i < terrain.length; i++) {
     ctx.lineTo(terrain[i].x, terrain[i].y);
   }
-  ctx.lineTo(width, height);
-  ctx.lineTo(0, height);
+  ctx.lineTo(worldWidth, worldHeight);
+  ctx.lineTo(0, worldHeight);
   ctx.closePath();
   ctx.fillStyle = gradient;
   ctx.fill();
 
-  // Draw terrain surface line
+  // Surface line
   ctx.beginPath();
   ctx.moveTo(terrain[0].x, terrain[0].y);
   for (let i = 1; i < terrain.length; i++) {
@@ -174,8 +187,15 @@ function renderTerrain(ctx: CanvasRenderingContext2D, terrain: Array<{ x: number
   ctx.stroke();
 }
 
-// Render a tank
-function renderTank(ctx: CanvasRenderingContext2D, tank: Tank, isActive: boolean, phase: string): void {
+// ─── Tank ───────────────────────────────────────────────────────
+
+function renderTank(
+  ctx: CanvasRenderingContext2D,
+  tank: Tank,
+  isActive: boolean,
+  phase: string,
+  _viewport?: Viewport
+): void {
   if (!tank.alive && phase !== 'menu') return;
 
   const { x, y, angle, color } = tank;
@@ -184,54 +204,48 @@ function renderTank(ctx: CanvasRenderingContext2D, tank: Tank, isActive: boolean
   ctx.save();
   ctx.translate(x, y);
 
-  // Draw active indicator (glow)
+  // Active indicator glow
   if (isActive) {
     ctx.shadowColor = color;
     ctx.shadowBlur = 15;
   }
 
-  // Draw tracks
+  // Tracks
   ctx.fillStyle = '#222';
   roundRect(ctx, -TANK_TRACKS_WIDTH / 2, 0, TANK_TRACKS_WIDTH, TANK_TRACKS_HEIGHT, 3);
   ctx.fill();
 
-  // Draw body
+  // Body
   ctx.fillStyle = color;
   roundRect(ctx, -TANK_WIDTH / 2, -TANK_HEIGHT, TANK_WIDTH, TANK_HEIGHT, [4, 4, 0, 0]);
   ctx.fill();
 
-  // Draw turret (semicircle)
+  // Turret
   ctx.beginPath();
   ctx.arc(0, -TANK_HEIGHT, TANK_TURRET_RADIUS, Math.PI, 0);
   ctx.fillStyle = color;
   ctx.fill();
 
-  // Draw barrel
+  // Barrel
   ctx.save();
   ctx.translate(0, -TANK_HEIGHT);
   ctx.rotate(angleRad);
-
-  // Barrel body
   ctx.fillStyle = color;
   ctx.fillRect(0, -TANK_BARREL_WIDTH / 2, TANK_BARREL_LENGTH, TANK_BARREL_WIDTH);
-
-  // Barrel mouth
   ctx.fillStyle = '#333';
   ctx.fillRect(TANK_BARREL_LENGTH, -TANK_BARREL_MOUTH_WIDTH / 2, TANK_BARREL_MOUTH_WIDTH, TANK_BARREL_MOUTH_HEIGHT);
-
   ctx.restore();
 
-  // Reset shadow
   ctx.shadowBlur = 0;
 
-  // Draw tank name
+  // Name
   ctx.fillStyle = color;
   ctx.font = 'bold 8px "Courier New", monospace';
   ctx.textAlign = 'center';
   const nameY = isActive ? -TANK_HEIGHT - 25 : -TANK_HEIGHT - 15;
   ctx.fillText(tank.name, 0, nameY);
 
-  // Draw active indicator arrow
+  // Active arrow
   if (isActive) {
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -245,7 +259,8 @@ function renderTank(ctx: CanvasRenderingContext2D, tank: Tank, isActive: boolean
   ctx.restore();
 }
 
-// Round rectangle helper
+// ─── Helpers ────────────────────────────────────────────────────
+
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -255,7 +270,6 @@ function roundRect(
   radii: number | number[]
 ): void {
   const r = typeof radii === 'number' ? [radii, radii, radii, radii] : radii;
-
   ctx.beginPath();
   ctx.moveTo(x + r[0], y);
   ctx.lineTo(x + width - r[1], y);
@@ -269,19 +283,31 @@ function roundRect(
   ctx.closePath();
 }
 
-// Render trajectory guide
-function renderTrajectory(ctx: CanvasRenderingContext2D, tank: Tank, wind: number, dimensions: CanvasDimensions): void {
+// ─── Trajectory ─────────────────────────────────────────────────
+
+function renderTrajectory(
+  ctx: CanvasRenderingContext2D,
+  tank: Tank,
+  wind: number,
+  viewport: Viewport | undefined,
+  dimensions: CanvasDimensions
+): void {
   const angleRad = tank.angle * (Math.PI / 180);
   const startX = tank.x + Math.cos(angleRad) * TANK_BARREL_LENGTH;
   const startY = tank.y - TANK_HEIGHT + Math.sin(angleRad) * TANK_BARREL_LENGTH;
 
-  const points = calculateTrajectory(startX, startY, tank.angle, tank.power, wind, dimensions);
+  // Use world dimensions for trajectory calculation
+  const worldDims: CanvasDimensions = viewport
+    ? { width: viewport.worldWidth, height: viewport.worldHeight }
+    : dimensions;
+
+  const points = calculateTrajectory(startX, startY, tank.angle, tank.power, wind, worldDims);
 
   if (points.length < 2) return;
 
   ctx.save();
   ctx.setLineDash([3, 6]);
-  ctx.strokeStyle = `${tank.color}44`; // 27% opacity
+  ctx.strokeStyle = `${tank.color}44`;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
@@ -292,9 +318,10 @@ function renderTrajectory(ctx: CanvasRenderingContext2D, tank: Tank, wind: numbe
   ctx.restore();
 }
 
-// Render projectile
+// ─── Projectile ─────────────────────────────────────────────────
+
 function renderProjectile(ctx: CanvasRenderingContext2D, projectile: { x: number; y: number; trail: Array<{ x: number; y: number }> }): void {
-  // Render trail
+  // Trail
   projectile.trail.forEach((point, i) => {
     const alpha = (i / projectile.trail.length) * 0.5;
     ctx.fillStyle = `rgba(${TRAIL_COLOR}, ${alpha})`;
@@ -303,7 +330,7 @@ function renderProjectile(ctx: CanvasRenderingContext2D, projectile: { x: number
     ctx.fill();
   });
 
-  // Render projectile
+  // Projectile ball
   ctx.save();
   ctx.shadowColor = PROJECTILE_SHADOW_COLOR;
   ctx.shadowBlur = PROJECTILE_SHADOW_BLUR;
@@ -314,22 +341,23 @@ function renderProjectile(ctx: CanvasRenderingContext2D, projectile: { x: number
   ctx.restore();
 }
 
-// Render explosion
-function renderExplosion(ctx: CanvasRenderingContext2D, explosion: { x: number; y: number; frame: number; particles: Array<{ x: number; y: number; size: number; color: string; life: number }> }, dimensions: CanvasDimensions): void {
+// ─── Explosion ──────────────────────────────────────────────────
+
+function renderExplosion(
+  ctx: CanvasRenderingContext2D,
+  explosion: { x: number; y: number; frame: number; particles: Array<{ x: number; y: number; size: number; color: string; life: number }> },
+  _dimensions: CanvasDimensions
+): void {
   const { x, y, frame, particles } = explosion;
   const progress = frame / EXPLOSION_DURATION_FRAMES;
 
-  // Calculate radius (sinusoidal: grows then shrinks)
   const maxRadius = EXPLOSION_RADIUS * 1.5;
   const radius = maxRadius * Math.sin(progress * Math.PI);
-
-  // Calculate opacity (fades out)
   const opacity = 1 - progress;
 
   ctx.save();
   ctx.globalAlpha = opacity;
 
-  // Draw radial gradient for explosion
   const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
   gradient.addColorStop(0, 'white');
   gradient.addColorStop(0.3, 'orange');
@@ -340,7 +368,6 @@ function renderExplosion(ctx: CanvasRenderingContext2D, explosion: { x: number; 
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  // Draw particles
   particles.forEach(p => {
     ctx.globalAlpha = p.life * opacity;
     ctx.fillStyle = p.color;
@@ -352,7 +379,8 @@ function renderExplosion(ctx: CanvasRenderingContext2D, explosion: { x: number; 
   ctx.restore();
 }
 
-// Render wind indicator
+// ─── HUD: Wind Indicator (screen space) ─────────────────────────
+
 function renderWindIndicator(ctx: CanvasRenderingContext2D, wind: number, dimensions: CanvasDimensions): void {
   const x = dimensions.width - 80;
   const y = 30;
@@ -363,7 +391,6 @@ function renderWindIndicator(ctx: CanvasRenderingContext2D, wind: number, dimens
   ctx.textAlign = 'right';
   ctx.fillText('WIND', x, y);
 
-  // Draw arrow
   const arrowLength = Math.abs(wind) * 25;
   const arrowX = wind >= 0 ? x - arrowLength : x + arrowLength;
 
@@ -374,7 +401,6 @@ function renderWindIndicator(ctx: CanvasRenderingContext2D, wind: number, dimens
   ctx.lineTo(arrowX, y + 8);
   ctx.stroke();
 
-  // Draw arrowhead
   ctx.beginPath();
   if (wind > 0) {
     ctx.moveTo(arrowX, y + 8);
@@ -392,7 +418,8 @@ function renderWindIndicator(ctx: CanvasRenderingContext2D, wind: number, dimens
   ctx.restore();
 }
 
-// Render tank count
+// ─── HUD: Tank Count (screen space) ─────────────────────────────
+
 function renderTankCount(ctx: CanvasRenderingContext2D, state: GameState, dimensions: CanvasDimensions): void {
   const aliveCount = state.tanks.filter(t => t.alive).length;
 
@@ -404,7 +431,53 @@ function renderTankCount(ctx: CanvasRenderingContext2D, state: GameState, dimens
   ctx.restore();
 }
 
-// Clear stars cache (call when dimensions change)
+// ─── Minimap ────────────────────────────────────────────────────
+
+function renderMinimap(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  viewport: Viewport,
+  canvasDimensions: CanvasDimensions
+): void {
+  const mmWidth = MINIMAP_WIDTH;
+  const mmHeight = MINIMAP_HEIGHT;
+  const mmX = canvasDimensions.width - mmWidth - 8;
+  const mmY = canvasDimensions.height - mmHeight - 8;
+  const scaleX = mmWidth / viewport.worldWidth;
+
+  // Background
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(mmX, mmY, mmWidth, mmHeight);
+
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(mmX, mmY, mmWidth, mmHeight);
+
+  // Visible area indicator
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.strokeRect(
+    mmX + viewport.x * scaleX,
+    mmY,
+    viewport.width * scaleX,
+    mmHeight
+  );
+
+  // Tank dots
+  state.tanks.forEach(tank => {
+    if (!tank.alive) return;
+    ctx.fillStyle = tank.color;
+    ctx.fillRect(
+      mmX + tank.x * scaleX - 1,
+      mmY + mmHeight / 2 - 2,
+      3,
+      4
+    );
+  });
+}
+
+// ─── Cache Control ──────────────────────────────────────────────
+
 export function clearStarsCache(): void {
   starsCache = null;
 }

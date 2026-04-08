@@ -1,6 +1,29 @@
 // Mode of game
 export type GameMode = 'ai' | 'local';
 
+// AI difficulty
+export type AIDifficulty = 'easy' | 'normal' | 'hard';
+
+// AI memory per tank
+export interface AIMemory {
+  lastTargetId: number;
+  lastAngle: number;
+  lastPower: number;
+  lastImpactX: number;
+  lastImpactY: number;
+  missOffset: number;
+}
+
+// Viewport / camera
+export interface Viewport {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  worldWidth: number;
+  worldHeight: number;
+}
+
 // Phase of game
 export type GamePhase = 'menu' | 'setup' | 'playing' | 'exploding' | 'gameover';
 
@@ -86,12 +109,14 @@ export interface GameState {
   wind: number;       // -2.0 to +2.0
   winner: Tank | null;
   isDraw: boolean;
+  viewport?: Viewport;
 }
 
 // Initial configuration
 export interface GameConfig {
   mode: GameMode;
   tankCount: number;  // 2-6 tanks
+  aiDifficulty?: AIDifficulty;
 }
 
 // Canvas dimensions
