@@ -1,51 +1,27 @@
 'use client';
 
 import { GameState } from '@/lib/tanks/types';
-import { useState, useEffect, useCallback } from 'react';
-import { MIN_ANGLE, MAX_ANGLE, MIN_POWER, MAX_POWER } from '@/lib/tanks/constants';
 
 interface GameScreenProps {
   gameState: GameState;
-  onFire: () => void;
-  onAngleChange: (delta: number) => void;
-  onPowerChange: (delta: number) => void;
+  onCanvasPointerDown: (e: React.PointerEvent) => void;
+  onCanvasPointerMove: (e: React.PointerEvent) => void;
+  onFireStart: () => void;
+  onFireEnd: () => void;
   children?: React.ReactNode;
 }
 
-export default function GameScreen({ gameState, onFire, onAngleChange, onPowerChange, children }: GameScreenProps) {
+export default function GameScreen({
+  gameState,
+  onCanvasPointerDown,
+  onCanvasPointerMove,
+  onFireStart,
+  onFireEnd,
+  children,
+}: GameScreenProps) {
   const activeTank = gameState.tanks[gameState.activeTankIndex];
   const isPlayerTurn = activeTank && !activeTank.isAI && activeTank.alive;
   const canFire = isPlayerTurn && !gameState.projectile?.active;
-
-  // Auto-repeat when holding buttons
-  const [angleDir, setAngleDir] = useState<'left' | 'right' | null>(null);
-  const [powerDir, setPowerDir] = useState<'up' | 'down' | null>(null);
-
-  useEffect(() => {
-    if (!angleDir) return;
-    const interval = setInterval(() => {
-      onAngleChange(angleDir === 'left' ? -1 : 1);
-    }, 80);
-    return () => clearInterval(interval);
-  }, [angleDir, onAngleChange]);
-
-  useEffect(() => {
-    if (!powerDir) return;
-    const interval = setInterval(() => {
-      onPowerChange(powerDir === 'up' ? 2 : -2);
-    }, 80);
-    return () => clearInterval(interval);
-  }, [powerDir, onPowerChange]);
-
-  const handleAngleStart = useCallback((dir: 'left' | 'right') => {
-    setAngleDir(dir);
-    onAngleChange(dir === 'left' ? -1 : 1);
-  }, [onAngleChange]);
-
-  const handlePowerStart = useCallback((dir: 'up' | 'down') => {
-    setPowerDir(dir);
-    onPowerChange(dir === 'up' ? 2 : -2);
-  }, [onPowerChange]);
 
   return (
     <div className="flex flex-col h-screen" style={{ background: '#0a0a0f' }}>
@@ -79,12 +55,18 @@ export default function GameScreen({ gameState, onFire, onAngleChange, onPowerCh
         </div>
       </div>
 
-      {/* Canvas — game area */}
-      <div className="flex-1 relative" id="tanks-canvas-container">
+      {/* Canvas — game area with touch handling */}
+      <div
+        className="flex-1 relative"
+        id="tanks-canvas-container"
+        onPointerDown={onCanvasPointerDown}
+        onPointerMove={onCanvasPointerMove}
+        style={{ touchAction: 'none' }}
+      >
         {children}
       </div>
 
-      {/* Bottom controls — ALWAYS VISIBLE */}
+      {/* Bottom controls */}
       <div
         className="flex items-center justify-between flex-shrink-0 px-2 py-2 gap-2"
         style={{
@@ -119,55 +101,6 @@ export default function GameScreen({ gameState, onFire, onAngleChange, onPowerCh
           ))}
         </div>
 
-        {/* Center: angle + power controls (only for human turn, no projectile active) */}
-        {canFire && (
-          <div className="flex items-center gap-2">
-            {/* Angle buttons */}
-            <div className="flex items-center gap-1" style={{ background: '#1a1a2e', borderRadius: '8px', padding: '4px' }}>
-              <button
-                onPointerDown={() => handleAngleStart('left')}
-                onPointerUp={() => setAngleDir(null)}
-                onPointerLeave={() => setAngleDir(null)}
-                className="w-10 h-10 rounded flex items-center justify-center text-lg font-bold active:scale-90"
-                style={{ background: '#252540', color: '#aaa' }}
-              >
-                ↶
-              </button>
-              <button
-                onPointerDown={() => handleAngleStart('right')}
-                onPointerUp={() => setAngleDir(null)}
-                onPointerLeave={() => setAngleDir(null)}
-                className="w-10 h-10 rounded flex items-center justify-center text-lg font-bold active:scale-90"
-                style={{ background: '#252540', color: '#aaa' }}
-              >
-                ↷
-              </button>
-            </div>
-
-            {/* Power buttons */}
-            <div className="flex items-center gap-1" style={{ background: '#1a1a2e', borderRadius: '8px', padding: '4px' }}>
-              <button
-                onPointerDown={() => handlePowerStart('up')}
-                onPointerUp={() => setPowerDir(null)}
-                onPointerLeave={() => setPowerDir(null)}
-                className="w-10 h-10 rounded flex items-center justify-center text-lg font-bold active:scale-90"
-                style={{ background: '#252540', color: '#aaa' }}
-              >
-                ↑
-              </button>
-              <button
-                onPointerDown={() => handlePowerStart('down')}
-                onPointerUp={() => setPowerDir(null)}
-                onPointerLeave={() => setPowerDir(null)}
-                className="w-10 h-10 rounded flex items-center justify-center text-lg font-bold active:scale-90"
-                style={{ background: '#252540', color: '#aaa' }}
-              >
-                ↓
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* AI thinking */}
         {activeTank?.isAI && (
           <span className="text-xs italic px-4" style={{ color: '#555' }}>
@@ -175,17 +108,20 @@ export default function GameScreen({ gameState, onFire, onAngleChange, onPowerCh
           </span>
         )}
 
-        {/* FIRE button — big, always visible when human turn */}
+        {/* FIRE button with power oscillation — only for human turn */}
         {canFire && (
           <button
-            onClick={onFire}
-            className="px-6 py-3 font-black text-base rounded-lg transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+            onPointerDown={onFireStart}
+            onPointerUp={onFireEnd}
+            onPointerLeave={onFireEnd}
+            className="px-6 py-3 font-black text-base rounded-lg transition-all hover:scale-105 active:scale-95 flex-shrink-0 select-none"
             style={{
               background: activeTank?.color || '#ff2d78',
               color: 'black',
               minWidth: '90px',
               letterSpacing: '0.1em',
               boxShadow: `0 0 20px ${activeTank?.color || '#ff2d78'}66`,
+              touchAction: 'none',
             }}
           >
             🔥 FIRE

@@ -16,16 +16,16 @@ export const TERRAIN_WAVES = [
 ] as const;
 
 // Tanks
-export const TANK_WIDTH = 30;
-export const TANK_HEIGHT = 16;
-export const TANK_TRACKS_WIDTH = 34;
-export const TANK_TRACKS_HEIGHT = 8;
-export const TANK_TURRET_RADIUS = 9;
-export const TANK_BARREL_LENGTH = 22;
-export const TANK_BARREL_WIDTH = 5;
-export const TANK_BARREL_MOUTH_WIDTH = 7;
-export const TANK_BARREL_MOUTH_HEIGHT = 5;
-export const TANK_MARGIN_RATIO = 0.08;
+export const TANK_WIDTH = 20;
+export const TANK_HEIGHT = 11;
+export const TANK_TRACKS_WIDTH = 22;
+export const TANK_TRACKS_HEIGHT = 5;
+export const TANK_TURRET_RADIUS = 6;
+export const TANK_BARREL_LENGTH = 15;
+export const TANK_BARREL_WIDTH = 3;
+export const TANK_BARREL_MOUTH_WIDTH = 5;
+export const TANK_BARREL_MOUTH_HEIGHT = 3;
+export const TANK_MARGIN_RATIO = 0.06;
 export const TANK_JITTER_RATIO = 0.15;
 export const TANK_LEFT_ANGLE = -60;
 export const TANK_RIGHT_ANGLE = -120;

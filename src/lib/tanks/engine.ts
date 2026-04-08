@@ -3,6 +3,8 @@ import { TANK_COLORS, TANK_NAMES } from './types';
 import {
   TANK_LEFT_ANGLE,
   TANK_RIGHT_ANGLE,
+  TANK_MARGIN_RATIO,
+  TANK_HEIGHT,
   TANK_DEFAULT_POWER,
   MIN_ANGLE,
   MAX_ANGLE,
@@ -71,14 +73,12 @@ export class TanksEngine {
   // Create tanks for the game
   private createTanks(config: GameConfig, terrain: Array<{ x: number; y: number }>): Tank[] {
     const tanks: Tank[] = [];
-    const margin = this.dimensions.width * 0.12;
+    const margin = this.dimensions.width * TANK_MARGIN_RATIO;
     const playableWidth = this.dimensions.width - (margin * 2);
     const spacing = playableWidth / (config.tankCount + 1);
 
     for (let i = 0; i < config.tankCount; i++) {
-      const baseX = margin + spacing * (i + 1);
-      const jitter = (Math.random() - 0.5) * 2 * spacing * 0.06;
-      const x = baseX + jitter;
+      const x = margin + spacing * (i + 1);
 
       // Get Y position from terrain
       const { y } = getTankPosition(terrain, x);
@@ -442,6 +442,31 @@ export class TanksEngine {
   // Check if currently animating
   isAnimating(): boolean {
     return this.state.phase === 'playing' || this.state.phase === 'exploding';
+  }
+
+  // Set angle from touch/pointer position
+  setAngleFromPosition(tankId: number, touchX: number, touchY: number, canvasRect: DOMRect): void {
+    const tank = this.state.tanks.find(t => t.id === tankId);
+    if (!tank || tank.isAI || !tank.alive) return;
+    if (this.state.projectile?.active) return;
+
+    // Convert touch position to canvas coordinates
+    const canvasX = touchX - canvasRect.left;
+    const canvasY = touchY - canvasRect.top;
+
+    // Calculate angle from tank to touch point
+    // Tank center for aim: (tank.x, tank.y - TANK_HEIGHT)
+    const aimOriginX = tank.x;
+    const aimOriginY = tank.y - TANK_HEIGHT;
+
+    const angleRad = Math.atan2(canvasY - aimOriginY, canvasX - aimOriginX);
+    let angleDeg = angleRad * (180 / Math.PI);
+
+    // Clamp to valid range (-175 to -5, only upward angles)
+    angleDeg = Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, angleDeg));
+
+    tank.angle = angleDeg;
+    this.notify();
   }
 
   // Get AI target (for debugging/testing)

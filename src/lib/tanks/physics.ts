@@ -5,6 +5,8 @@ import {
   WIND_FACTOR,
   PROJECTILE_TRAIL_LENGTH,
   EXPLOSION_RADIUS,
+  TANK_BARREL_LENGTH,
+  TANK_HEIGHT,
 } from './constants';
 import { getTerrainY } from './terrain';
 
@@ -19,9 +21,9 @@ export function createProjectile(
   const speed = tank.power * PROJECTILE_SPEED_FACTOR;
 
   // Calculate muzzle position (tip of barrel)
-  const barrelLength = 22;
+  const barrelLength = TANK_BARREL_LENGTH;
   const muzzleX = tank.x + Math.cos(angleRad) * barrelLength;
-  const muzzleY = tank.y - 16 + Math.sin(angleRad) * barrelLength; // -16 for tank body offset
+  const muzzleY = tank.y - TANK_HEIGHT + Math.sin(angleRad) * barrelLength;
 
   return {
     x: muzzleX,

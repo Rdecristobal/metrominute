@@ -226,7 +226,7 @@ function renderTank(ctx: CanvasRenderingContext2D, tank: Tank, isActive: boolean
 
   // Draw tank name
   ctx.fillStyle = color;
-  ctx.font = 'bold 10px "Courier New", monospace';
+  ctx.font = 'bold 8px "Courier New", monospace';
   ctx.textAlign = 'center';
   const nameY = isActive ? -TANK_HEIGHT - 25 : -TANK_HEIGHT - 15;
   ctx.fillText(tank.name, 0, nameY);
@@ -271,10 +271,9 @@ function roundRect(
 
 // Render trajectory guide
 function renderTrajectory(ctx: CanvasRenderingContext2D, tank: Tank, wind: number, dimensions: CanvasDimensions): void {
-  const barrelLength = 22;
   const angleRad = tank.angle * (Math.PI / 180);
-  const startX = tank.x + Math.cos(angleRad) * barrelLength;
-  const startY = tank.y - 16 + Math.sin(angleRad) * barrelLength;
+  const startX = tank.x + Math.cos(angleRad) * TANK_BARREL_LENGTH;
+  const startY = tank.y - TANK_HEIGHT + Math.sin(angleRad) * TANK_BARREL_LENGTH;
 
   const points = calculateTrajectory(startX, startY, tank.angle, tank.power, wind, dimensions);
 
@@ -360,7 +359,7 @@ function renderWindIndicator(ctx: CanvasRenderingContext2D, wind: number, dimens
 
   ctx.save();
   ctx.fillStyle = '#888';
-  ctx.font = '10px "Courier New", monospace';
+  ctx.font = '8px "Courier New", monospace';
   ctx.textAlign = 'right';
   ctx.fillText('WIND', x, y);
 
@@ -399,7 +398,7 @@ function renderTankCount(ctx: CanvasRenderingContext2D, state: GameState, dimens
 
   ctx.save();
   ctx.fillStyle = '#666';
-  ctx.font = '10px "Courier New", monospace';
+  ctx.font = '8px "Courier New", monospace';
   ctx.textAlign = 'right';
   ctx.fillText(`${aliveCount} TANK${aliveCount !== 1 ? 'S' : ''}`, dimensions.width - 10, 15);
   ctx.restore();

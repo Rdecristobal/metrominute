@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { GameMode, GamePhase, GameState, CanvasDimensions } from '@/lib/tanks/types';
 import { TanksEngine } from '@/lib/tanks/engine';
 import { renderGame } from '@/lib/tanks/renderer';
-import { MIN_ANGLE, MAX_ANGLE, MIN_POWER, MAX_POWER } from '@/lib/tanks/constants';
+import { MIN_POWER, MAX_POWER } from '@/lib/tanks/constants';
 import MenuScreen from './MenuScreen';
 import SetupScreen from './SetupScreen';
 import GameScreen from './GameScreen';
@@ -15,22 +15,15 @@ export default function TanksGame() {
   const [mode, setMode] = useState<GameMode | null>(null);
   const [tankCount, setTankCount] = useState(2);
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [isPortrait, setIsPortrait] = useState(false);
 
   const engineRef = useRef<TanksEngine | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameLoopRef = useRef<number | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
-  // Check orientation
-  useEffect(() => {
-    const checkOrientation = () => {
-      setIsPortrait(window.innerHeight > window.innerWidth);
-    };
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    return () => window.removeEventListener('resize', checkOrientation);
-  }, []);
+  // Power oscillation refs
+  const powerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const powerDirectionRef = useRef<'up' | 'down'>('up');
 
   // Initialize engine
   useEffect(() => {
@@ -50,8 +43,19 @@ export default function TanksGame() {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
+      if (powerIntervalRef.current) {
+        clearInterval(powerIntervalRef.current);
+      }
     };
   }, []);
+
+  // Cleanup power interval when turn changes (activeTankIndex changes)
+  useEffect(() => {
+    if (powerIntervalRef.current) {
+      clearInterval(powerIntervalRef.current);
+      powerIntervalRef.current = null;
+    }
+  }, [gameState?.activeTankIndex]);
 
   // Setup canvas resize with ref callback - fires when canvas mounts/unmounts
   const handleCanvasRef = useCallback((canvas: HTMLCanvasElement | null) => {
@@ -88,7 +92,7 @@ export default function TanksGame() {
     // Set initial dimensions immediately
     updateCanvasDimensions();
 
-    // Retry with RAF if dimensions were 0 (can happen on remount after orientation change)
+    // Retry with RAF if dimensions were 0
     let attempts = 0;
     const maxAttempts = 5;
 
@@ -97,7 +101,6 @@ export default function TanksGame() {
       attempts++;
 
       if (!updateCanvasDimensions()) {
-        // Dimensions still 0, try again next frame
         requestAnimationFrame(retryWithRAF);
       }
     };
@@ -126,35 +129,6 @@ export default function TanksGame() {
     resizeObserverRef.current = resizeObserver;
   }, []);
 
-  // Force canvas resize when rotating from portrait to landscape
-  useEffect(() => {
-    // Only trigger when switching FROM portrait TO landscape
-    // AND we're in a game state (not menu/setup)
-    if (!isPortrait && (screen === 'playing' || screen === 'exploding')) {
-      const canvas = canvasRef.current;
-      const container = document.getElementById('tanks-canvas-container');
-
-      if (canvas && container) {
-        // Small delay to ensure layout is stable after orientation change
-        const timeoutId = setTimeout(() => {
-          const rect = container.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            const dimensions: CanvasDimensions = {
-              width: rect.width,
-              height: rect.height,
-            };
-            engineRef.current?.updateDimensions(dimensions);
-          }
-        }, 100);
-
-        return () => clearTimeout(timeoutId);
-      }
-    }
-  }, [isPortrait, screen]);
-
   // Game loop
   useEffect(() => {
     if (screen !== 'playing' && screen !== 'exploding') {
@@ -170,7 +144,6 @@ export default function TanksGame() {
 
       // Skip render if canvas has invalid dimensions (0x0)
       if (canvasRef.current.width === 0 || canvasRef.current.height === 0) {
-        // Try to resize again on next frame
         if (engineRef.current.isAnimating()) {
           gameLoopRef.current = requestAnimationFrame(loop);
         } else {
@@ -218,66 +191,114 @@ export default function TanksGame() {
     setTankCount(count);
   }, []);
 
-  // Start game handler
+  // Start game handler — do NOT setScreen('playing'), the subscription handles it
   const handleStartGame = useCallback(() => {
     if (!mode) return;
+    if (powerIntervalRef.current) {
+      clearInterval(powerIntervalRef.current);
+      powerIntervalRef.current = null;
+    }
     engineRef.current?.startGame({ mode, tankCount });
-    setScreen('playing');
   }, [mode, tankCount]);
 
   // Back to menu handler
   const handleBackToMenu = useCallback(() => {
+    if (powerIntervalRef.current) {
+      clearInterval(powerIntervalRef.current);
+      powerIntervalRef.current = null;
+    }
     setMode(null);
     setTankCount(2);
     setScreen('menu');
   }, []);
 
-  // Fire handler
-  const handleFire = useCallback(() => {
+  // Pointer handlers for aiming (touch on canvas)
+  const handleCanvasPointerDown = useCallback((e: React.PointerEvent) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const state = engine.getState();
+    const activeTank = state.tanks[state.activeTankIndex];
+    if (!activeTank || activeTank.isAI || !activeTank.alive) return;
+    if (state.projectile?.active) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    engine.setAngleFromPosition(activeTank.id, e.clientX, e.clientY, rect);
+  }, []);
+
+  const handleCanvasPointerMove = useCallback((e: React.PointerEvent) => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const state = engine.getState();
+    const activeTank = state.tanks[state.activeTankIndex];
+    if (!activeTank || activeTank.isAI || !activeTank.alive) return;
+    if (state.projectile?.active) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    engine.setAngleFromPosition(activeTank.id, e.clientX, e.clientY, rect);
+  }, []);
+
+  // FIRE with power oscillation
+  const handleFireStart = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    const state = engine.getState();
+    const activeTank = state.tanks[state.activeTankIndex];
+    if (!activeTank || activeTank.isAI || !activeTank.alive) return;
+    if (state.projectile?.active) return;
+
+    // Start power oscillation
+    powerDirectionRef.current = 'up';
+    engine.setTankPower(activeTank.id, MIN_POWER);
+
+    powerIntervalRef.current = setInterval(() => {
+      const currentState = engineRef.current?.getState();
+      if (!currentState) return;
+      const tank = currentState.tanks[currentState.activeTankIndex];
+      if (!tank) return;
+
+      let newPower = tank.power;
+      const step = 3;
+
+      if (powerDirectionRef.current === 'up') {
+        newPower += step;
+        if (newPower >= MAX_POWER) {
+          newPower = MAX_POWER;
+          powerDirectionRef.current = 'down';
+        }
+      } else {
+        newPower -= step;
+        if (newPower <= MIN_POWER) {
+          newPower = MIN_POWER;
+          powerDirectionRef.current = 'up';
+        }
+      }
+
+      engineRef.current?.setTankPower(tank.id, newPower);
+    }, 30);
+  }, []);
+
+  const handleFireEnd = useCallback(() => {
+    // Stop oscillation and fire
+    if (powerIntervalRef.current) {
+      clearInterval(powerIntervalRef.current);
+      powerIntervalRef.current = null;
+    }
     engineRef.current?.fire();
-  }, []);
-
-  // Angle change handler (from buttons)
-  const handleAngleChange = useCallback((delta: number) => {
-    const engine = engineRef.current;
-    if (!engine) return;
-    const state = engine.getState();
-    const activeTank = state.tanks[state.activeTankIndex];
-    if (!activeTank || activeTank.isAI || !activeTank.alive) return;
-    if (state.projectile?.active) return;
-    const newAngle = activeTank.angle + delta;
-    engine.setTankAngle(activeTank.id, Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, newAngle)));
-  }, []);
-
-  // Power change handler (from buttons)
-  const handlePowerChange = useCallback((delta: number) => {
-    const engine = engineRef.current;
-    if (!engine) return;
-    const state = engine.getState();
-    const activeTank = state.tanks[state.activeTankIndex];
-    if (!activeTank || activeTank.isAI || !activeTank.alive) return;
-    if (state.projectile?.active) return;
-    const newPower = activeTank.power + delta;
-    engine.setTankPower(activeTank.id, Math.max(MIN_POWER, Math.min(MAX_POWER, newPower)));
   }, []);
 
   // Rematch handler
   const handleRematch = useCallback(() => {
     if (!mode) return;
+    if (powerIntervalRef.current) {
+      clearInterval(powerIntervalRef.current);
+      powerIntervalRef.current = null;
+    }
     engineRef.current?.startGame({ mode, tankCount });
-    setScreen('playing');
   }, [mode, tankCount]);
-
-  // Show rotate overlay for portrait — only DURING gameplay, not menu/setup
-  if (isPortrait && (screen === 'playing' || screen === 'exploding')) {
-    return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50">
-        <div className="text-4xl mb-4">🔄</div>
-        <h2 className="text-2xl font-bold mb-2 text-[#ff2d78]">Rotate your device</h2>
-        <p className="text-gray-400">Tanks requires landscape mode to play</p>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full h-full relative">
@@ -299,9 +320,10 @@ export default function TanksGame() {
       {(screen === 'playing' || screen === 'exploding') && gameState && (
         <GameScreen
           gameState={gameState}
-          onFire={handleFire}
-          onAngleChange={handleAngleChange}
-          onPowerChange={handlePowerChange}
+          onCanvasPointerDown={handleCanvasPointerDown}
+          onCanvasPointerMove={handleCanvasPointerMove}
+          onFireStart={handleFireStart}
+          onFireEnd={handleFireEnd}
         >
           <canvas
             ref={handleCanvasRef}
