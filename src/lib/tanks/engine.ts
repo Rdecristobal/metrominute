@@ -56,10 +56,15 @@ export class TanksEngine {
 
   private calcWorldSize(dimensions: CanvasDimensions): { worldWidth: number; worldHeight: number } {
     const aspectRatio = dimensions.width / dimensions.height;
-    const worldWidth = aspectRatio < 1
-      ? dimensions.width * WORLD_SCALE_PORTRAIT
-      : dimensions.width * WORLD_SCALE_LANDSCAPE;
-    return { worldWidth, worldHeight: dimensions.height };
+    const isLandscape = aspectRatio >= 1;
+    const worldWidth = isLandscape
+      ? dimensions.width * WORLD_SCALE_LANDSCAPE
+      : dimensions.width * WORLD_SCALE_PORTRAIT;
+    // In landscape, give terrain more vertical room for interesting hills
+    const worldHeight = isLandscape
+      ? dimensions.height * 1.5
+      : dimensions.height;
+    return { worldWidth, worldHeight };
   }
 
   // ─── Camera ────────────────────────────────────────────────────
@@ -73,9 +78,8 @@ export class TanksEngine {
     let targetX: number;
 
     if (this.state.projectile?.active) {
-      // Split-focus between tank and projectile
-      const midX = (activeTank.x + this.state.projectile.x) / 2;
-      targetX = midX - viewport.width / 2;
+      // Follow projectile directly (centered)
+      targetX = this.state.projectile.x - viewport.width / 2;
       viewport.x += (targetX - viewport.x) * CAMERA_PROJECTILE_SMOOTHING;
     } else {
       // Follow active tank
@@ -594,6 +598,16 @@ export class TanksEngine {
 
     tank.angle = angleDeg;
     this.notify();
+  }
+
+  // ─── Camera Pan (swipe exploration) ────────────────────────────
+
+  panCamera(worldDeltaX: number): void {
+    const viewport = this.state.viewport;
+    if (!viewport) return;
+    viewport.x += worldDeltaX;
+    // Clamp
+    viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
   }
 
   // ─── Testing ───────────────────────────────────────────────────

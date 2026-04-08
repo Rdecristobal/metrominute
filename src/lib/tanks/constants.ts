@@ -12,11 +12,15 @@ export const LANDSCAPE_HUD_HEIGHT = 24;
 export const LANDSCAPE_CONTROLS_HEIGHT = 40;
 export const TERRAIN_AMP_SCALE_FACTOR = 0.7;
 
+// Camera pan (swipe exploration)
+export const PAN_THRESHOLD = 15; // px — minimum horizontal drag to start panning
+export const PAN_SPEED_FACTOR = 1.0; // 1:1 finger-to-camera ratio
+
 // World / Viewport
 export const WORLD_SCALE_PORTRAIT = 2.5;
-export const WORLD_SCALE_LANDSCAPE = 1.5;
+export const WORLD_SCALE_LANDSCAPE = 3.0;
 export const CAMERA_SMOOTHING = 0.08;
-export const CAMERA_PROJECTILE_SMOOTHING = 0.06;
+export const CAMERA_PROJECTILE_SMOOTHING = 0.15;
 export const MINIMAP_WIDTH = 120;
 export const MINIMAP_HEIGHT = 20;
 

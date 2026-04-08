@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { GameMode, GamePhase, GameState, CanvasDimensions } from '@/lib/tanks/types';
 import { TanksEngine } from '@/lib/tanks/engine';
 import { renderGame } from '@/lib/tanks/renderer';
-import { MIN_POWER, MAX_POWER } from '@/lib/tanks/constants';
+import { MIN_POWER, MAX_POWER, PAN_THRESHOLD, PAN_SPEED_FACTOR } from '@/lib/tanks/constants';
 import MenuScreen from './MenuScreen';
 import SetupScreen from './SetupScreen';
 import GameScreen from './GameScreen';
@@ -24,6 +24,11 @@ export default function TanksGame() {
   // Power oscillation refs
   const powerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const powerDirectionRef = useRef<'up' | 'down'>('up');
+
+  // Swipe/pan detection refs
+  const pointerStartXRef = useRef<number | null>(null);
+  const lastPointerXRef = useRef<number | null>(null);
+  const isPanningRef = useRef(false);
 
   // Initialize engine
   useEffect(() => {
@@ -212,7 +217,7 @@ export default function TanksGame() {
     setScreen('menu');
   }, []);
 
-  // Pointer handlers for aiming (touch on canvas)
+  // Pointer handlers for aiming + swipe camera pan
   const handleCanvasPointerDown = useCallback((e: React.PointerEvent) => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -221,6 +226,12 @@ export default function TanksGame() {
     if (!activeTank || activeTank.isAI || !activeTank.alive) return;
     if (state.projectile?.active) return;
 
+    // Record pointer start for swipe detection
+    pointerStartXRef.current = e.clientX;
+    lastPointerXRef.current = e.clientX;
+    isPanningRef.current = false;
+
+    // Start aiming immediately (will be overridden by pan if swipe detected)
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -235,10 +246,36 @@ export default function TanksGame() {
     if (!activeTank || activeTank.isAI || !activeTank.alive) return;
     if (state.projectile?.active) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    engine.setAngleFromPosition(activeTank.id, e.clientX, e.clientY, rect);
+    const startX = pointerStartXRef.current;
+    const lastX = lastPointerXRef.current;
+    if (startX === null || lastX === null) return;
+
+    const deltaX = e.clientX - startX;
+
+    // Check if horizontal drag exceeds threshold → start panning
+    if (!isPanningRef.current && Math.abs(deltaX) > PAN_THRESHOLD) {
+      isPanningRef.current = true;
+    }
+
+    if (isPanningRef.current) {
+      // Pan camera by the delta since last move
+      const moveDelta = e.clientX - lastX;
+      // Invert: drag right → camera moves left (world scrolls left)
+      engine.panCamera(-moveDelta * PAN_SPEED_FACTOR);
+      lastPointerXRef.current = e.clientX;
+    } else {
+      // Normal aiming behavior
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      engine.setAngleFromPosition(activeTank.id, e.clientX, e.clientY, rect);
+    }
+  }, []);
+
+  const handleCanvasPointerUp = useCallback(() => {
+    pointerStartXRef.current = null;
+    lastPointerXRef.current = null;
+    isPanningRef.current = false;
   }, []);
 
   // FIRE with power oscillation
@@ -322,6 +359,7 @@ export default function TanksGame() {
           gameState={gameState}
           onCanvasPointerDown={handleCanvasPointerDown}
           onCanvasPointerMove={handleCanvasPointerMove}
+          onCanvasPointerUp={handleCanvasPointerUp}
           onFireStart={handleFireStart}
           onFireEnd={handleFireEnd}
         >

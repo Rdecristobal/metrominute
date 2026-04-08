@@ -22,6 +22,7 @@ interface GameScreenProps {
   gameState: GameState;
   onCanvasPointerDown: (e: React.PointerEvent) => void;
   onCanvasPointerMove: (e: React.PointerEvent) => void;
+  onCanvasPointerUp: () => void;
   onFireStart: () => void;
   onFireEnd: () => void;
   children?: React.ReactNode;
@@ -33,6 +34,7 @@ export default function GameScreen({
   gameState,
   onCanvasPointerDown,
   onCanvasPointerMove,
+  onCanvasPointerUp,
   onFireStart,
   onFireEnd,
   children,
@@ -168,6 +170,8 @@ export default function GameScreen({
         id="tanks-canvas-container"
         onPointerDown={onCanvasPointerDown}
         onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+        onPointerLeave={onCanvasPointerUp}
         style={{ touchAction: 'none' }}
       >
         {children}
