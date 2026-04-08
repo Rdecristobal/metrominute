@@ -65,7 +65,7 @@ export default function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} ${vt323.variable} h-full antialiased`}
     >
-      <body className="h-full flex flex-col bg-retro-dark overflow-hidden">{children}</body>
+      <body className="min-h-full flex flex-col bg-retro-dark">{children}</body>
     </html>
   );
 }
