@@ -18,7 +18,6 @@ export const PAN_SPEED_FACTOR = 1.0; // 1:1 finger-to-camera ratio
 
 // World / Viewport
 export const WORLD_SCALE_PORTRAIT = 2.5;
-export const WORLD_SCALE_LANDSCAPE = 3.0;
 export const CAMERA_SMOOTHING = 0.08;
 export const CAMERA_PROJECTILE_SMOOTHING = 0.15;
 export const MINIMAP_WIDTH = 120;

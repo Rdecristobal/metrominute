@@ -117,16 +117,16 @@ function findOptimalShot(
   worldWidth: number,
   worldHeight: number
 ): { angle: number; power: number; distance: number } {
-  const angleRad0 = shooter.angle * (Math.PI / 180);
-  const startX = shooter.x + Math.cos(angleRad0) * TANK_BARREL_LENGTH;
-  const startY = shooter.y - TANK_HEIGHT + Math.sin(angleRad0) * TANK_BARREL_LENGTH;
-
   let bestAngle = -60;
   let bestPower = 50;
   let bestDistance = Infinity;
 
-  // Coarse grid search
-  for (let angle = -170; angle <= -10; angle += 2) {
+  // Coarse grid search — compute muzzle position per candidate angle
+  for (let angle = -170; angle <= -10; angle += 3) {
+    const angleRad = angle * (Math.PI / 180);
+    const startX = shooter.x + Math.cos(angleRad) * TANK_BARREL_LENGTH;
+    const startY = shooter.y - TANK_HEIGHT + Math.sin(angleRad) * TANK_BARREL_LENGTH;
+
     for (let power = 20; power <= 100; power += 5) {
       const impact = simulateTrajectory(
         startX, startY, angle, power, wind, terrain, worldWidth, worldHeight
@@ -145,10 +145,13 @@ function findOptimalShot(
   }
 
   // Fine refinement around the best point
-  for (let angle = bestAngle - 4; angle <= bestAngle + 4; angle += 0.5) {
-    for (let power = Math.max(MIN_POWER, bestPower - 10); power <= Math.min(MAX_POWER, bestPower + 10); power += 2) {
-      if (angle < -175 || angle > -5) continue;
+  for (let angle = bestAngle - 5; angle <= bestAngle + 5; angle += 0.5) {
+    if (angle < -175 || angle > -5) continue;
+    const angleRad = angle * (Math.PI / 180);
+    const startX = shooter.x + Math.cos(angleRad) * TANK_BARREL_LENGTH;
+    const startY = shooter.y - TANK_HEIGHT + Math.sin(angleRad) * TANK_BARREL_LENGTH;
 
+    for (let power = Math.max(MIN_POWER, bestPower - 10); power <= Math.min(MAX_POWER, bestPower + 10); power += 2) {
       const impact = simulateTrajectory(
         startX, startY, angle, power, wind, terrain, worldWidth, worldHeight
       );
@@ -237,14 +240,27 @@ export function calculateAIShot(
   let power: number;
 
   if (Math.random() < params.optimalShotProbability) {
-    // Calculate optimal shot by inverting physics
+    // Calculate optimal shot via grid search
     const optimal = findOptimalShot(shooter, target, wind, terrain, worldWidth, worldHeight);
     angle = optimal.angle;
     power = optimal.power;
   } else {
-    // Fallback: heuristic shot
-    angle = shooter.x < target.x ? -60 : -120;
-    power = 50 + Math.random() * 30;
+    // Smarter fallback: vary angle based on distance, add power variety
+    const dx = target.x - shooter.x;
+    const distance = Math.abs(dx);
+    const isRight = dx > 0;
+
+    // Choose between low-angle direct shot and high-angle lob
+    const isLob = Math.random() < 0.35;
+    const baseAngle = isRight
+      ? (isLob ? -135 : -45)
+      : (isLob ? -45 : -135);
+    const angleVariation = (Math.random() - 0.5) * 30;
+    angle = baseAngle + angleVariation;
+
+    // Power scales with distance
+    const basePower = Math.min(90, Math.max(30, distance * 0.12));
+    power = basePower + (Math.random() - 0.5) * 20;
   }
 
   // Adjust from memory

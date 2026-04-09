@@ -4,6 +4,7 @@ import {
   TANK_LEFT_ANGLE,
   TANK_RIGHT_ANGLE,
   TANK_MARGIN_RATIO,
+  TANK_JITTER_RATIO,
   TANK_HEIGHT,
   TANK_DEFAULT_POWER,
   TANK_BARREL_LENGTH,
@@ -26,7 +27,6 @@ import {
   EXPLOSION_PARTICLE_MAX_G,
   EXPLOSION_PARTICLE_B,
   WORLD_SCALE_PORTRAIT,
-  WORLD_SCALE_LANDSCAPE,
   CAMERA_SMOOTHING,
   CAMERA_PROJECTILE_SMOOTHING,
 } from './constants';
@@ -42,7 +42,6 @@ export class TanksEngine {
   private aiThinkingFrames: number = 0;
   private aiShotDelayTimer: number | null = null;
   private aiHasProgrammedShot: boolean = false;
-  private previousDimensions: CanvasDimensions | null = null;
   private lastAITargetId: number | null = null;
   private cameraOverride: boolean = false;
   private config: GameConfig;
@@ -55,16 +54,15 @@ export class TanksEngine {
 
   // ─── World & Viewport helpers ──────────────────────────────────
 
+  /**
+   * World size is computed ONCE at creation and never changes on resize.
+   * Uses the larger screen dimension so the world is big enough in both
+   * portrait and landscape orientations.
+   */
   private calcWorldSize(dimensions: CanvasDimensions): { worldWidth: number; worldHeight: number } {
-    const aspectRatio = dimensions.width / dimensions.height;
-    const isLandscape = aspectRatio >= 1;
-    const worldWidth = isLandscape
-      ? dimensions.width * WORLD_SCALE_LANDSCAPE
-      : dimensions.width * WORLD_SCALE_PORTRAIT;
-    // In landscape, give terrain more vertical room for interesting hills
-    const worldHeight = isLandscape
-      ? dimensions.height * 1.5
-      : dimensions.height;
+    const maxDim = Math.max(dimensions.width, dimensions.height);
+    const worldWidth = maxDim * WORLD_SCALE_PORTRAIT; // 2.5× largest side
+    const worldHeight = maxDim * 1.3;
     return { worldWidth, worldHeight };
   }
 
@@ -148,7 +146,9 @@ export class TanksEngine {
     const spacing = playableWidth / (config.tankCount + 1);
 
     for (let i = 0; i < config.tankCount; i++) {
-      const x = margin + spacing * (i + 1);
+      // Add random jitter so tanks aren't perfectly evenly spaced
+      const jitter = spacing * TANK_JITTER_RATIO * (Math.random() - 0.5);
+      const x = margin + spacing * (i + 1) + jitter;
 
       // Get Y position from terrain
       const { y } = getTankPosition(terrain, x);
@@ -508,70 +508,24 @@ export class TanksEngine {
 
   // ─── Dimensions / Resize ───────────────────────────────────────
 
+  /**
+   * Resize handler: only updates the viewport (what part of the world is
+   * visible). The world itself — terrain, tanks, projectile positions —
+   * NEVER changes on resize. This prevents the game from breaking when
+   * the phone is rotated.
+   */
   updateDimensions(dimensions: CanvasDimensions): void {
     this.dimensions = dimensions;
 
     const viewport = this.state.viewport;
     if (viewport) {
-      // Update viewport canvas dimensions (world stays the same)
+      // Only update viewport canvas dimensions — world stays the same
       viewport.width = dimensions.width;
       viewport.height = dimensions.height;
 
-      // Clamp camera position
+      // Clamp camera position to world bounds
       viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
     }
-
-    // Scale terrain points proportionally to preserve deformations
-    if (!this.previousDimensions || this.previousDimensions.width === 0 || this.previousDimensions.height === 0) {
-      // Full regeneration needed (we can't because we'd lose world scale)
-      // Instead, recalculate world and regenerate terrain
-      const { worldWidth, worldHeight } = this.calcWorldSize(dimensions);
-      this.state.terrain = generateTerrain({ width: worldWidth, height: worldHeight });
-
-      // Update viewport world size
-      if (viewport) {
-        viewport.worldWidth = worldWidth;
-        viewport.worldHeight = worldHeight;
-        viewport.x = Math.max(0, Math.min(worldWidth - viewport.width, viewport.x));
-      }
-
-      // Redistribute tanks across new world
-      const margin = worldWidth * TANK_MARGIN_RATIO;
-      const playableWidth = worldWidth - (margin * 2);
-      const spacing = playableWidth / (this.state.tankCount + 1);
-      this.state.tanks.forEach((tank, i) => {
-        tank.x = margin + spacing * (i + 1);
-      });
-    } else {
-      // Proportional scaling
-      const scaleX = dimensions.width / this.previousDimensions.width;
-      const scaleY = dimensions.height / this.previousDimensions.height;
-
-      this.state.terrain = this.state.terrain.map(point => ({
-        x: point.x * scaleX,
-        y: point.y * scaleY,
-      }));
-
-      // Scale tank X positions
-      this.state.tanks.forEach(tank => {
-        tank.x *= scaleX;
-      });
-
-      // Update viewport
-      if (viewport) {
-        viewport.worldWidth *= scaleX;
-        viewport.worldHeight *= scaleY;
-        viewport.x = Math.max(0, Math.min(viewport.worldWidth - viewport.width, viewport.x));
-      }
-    }
-
-    this.previousDimensions = { ...dimensions };
-
-    // Recalculate tank Y positions
-    this.state.tanks.forEach(tank => {
-      const { y } = getTankPosition(this.state.terrain, tank.x);
-      tank.y = y;
-    });
 
     clearStarsCache();
     this.notify();
