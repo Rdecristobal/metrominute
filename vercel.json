@@ -2,32 +2,32 @@
   "rewrites": [
     {
       "source": "/",
-      "has": [{ "host": "footballstop.dyzink.com" }],
+      "has": [{ "key": "host", "value": "footballstop.dyzink.com" }],
       "destination": "/futbol"
     },
     {
       "source": "/(.*)",
-      "has": [{ "host": "footballstop.dyzink.com" }],
+      "has": [{ "key": "host", "value": "footballstop.dyzink.com" }],
       "destination": "/futbol/$1"
     },
     {
       "source": "/",
-      "has": [{ "host": "bubbles.dyzink.com" }],
+      "has": [{ "key": "host", "value": "bubbles.dyzink.com" }],
       "destination": "/bubble"
     },
     {
       "source": "/(.*)",
-      "has": [{ "host": "bubbles.dyzink.com" }],
+      "has": [{ "key": "host", "value": "bubbles.dyzink.com" }],
       "destination": "/bubble/$1"
     },
     {
       "source": "/",
-      "has": [{ "host": "tanks.dyzink.com" }],
+      "has": [{ "key": "host", "value": "tanks.dyzink.com" }],
       "destination": "/tanks"
     },
     {
       "source": "/(.*)",
-      "has": [{ "host": "tanks.dyzink.com" }],
+      "has": [{ "key": "host", "value": "tanks.dyzink.com" }],
       "destination": "/tanks/$1"
     }
   ]
